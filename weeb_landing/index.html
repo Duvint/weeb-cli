@@ -1,0 +1,514 @@
+<!DOCTYPE html>
+<html lang="tr" class="dark">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Weeb CLI</title>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400&family=Shippori+Mincho:wght@400;500;700&family=Zen+Kaku+Gothic+New:wght@300;400;500&display=swap"
+        rel="stylesheet">
+
+    <script src="https://unpkg.com/@phosphor-icons/web"></script>
+
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+    <script src="https://cdn.jsdelivr.net/gh/studio-freight/lenis@1.0.29/bundled/lenis.min.js"></script>
+
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['"Zen Kaku Gothic New"', 'sans-serif'],
+                        serif: ['"Shippori Mincho"', 'serif'],
+                        mono: ['"JetBrains Mono"', 'monospace'],
+                    },
+                    colors: {
+                        bg: '#050505',
+                        surface: '#0f0f11',
+                        border: '#1f1f22',
+                        text: '#e6e6e6',
+                        subtext: '#888888'
+                    }
+                }
+            }
+        }
+    </script>
+
+    <style>
+        body {
+            background-color: #050505;
+            color: #e6e6e6;
+            -webkit-font-smoothing: antialiased;
+            user-select: none;
+            cursor: default;
+        }
+
+        .noise-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)' opacity='0.04'/%3E%3C/svg%3E");
+            pointer-events: none;
+            z-index: 50;
+        }
+
+        ::selection {
+            background: #333;
+            color: white;
+        }
+
+        .card {
+            background-color: #0f0f11;
+            border: 1px solid #1f1f22;
+            transition: border-color 0.4s ease;
+        }
+
+        .card:hover {
+            border-color: #3f3f46;
+        }
+
+        .reveal {
+            opacity: 0;
+            transform: translateY(20px);
+            transition: all 1s cubic-bezier(0.16, 1, 0.3, 1);
+            will-change: transform, opacity;
+        }
+
+        .reveal.active {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        html.lenis {
+            height: auto;
+        }
+
+        .lenis.lenis-smooth {
+            scroll-behavior: auto;
+        }
+
+        ::-webkit-scrollbar {
+            display: none;
+        }
+
+        body {
+            scrollbar-width: none;
+            -ms-overflow-style: none;
+        }
+    </style>
+</head>
+
+<body class="antialiased">
+
+    <div class="noise-overlay"></div>
+
+    <div id="app" class="relative min-h-screen flex flex-col">
+
+        <header class="pt-16 pb-16 px-6 flex flex-col items-center justify-center text-center min-h-screen">
+
+            <h1 class="text-4xl sm:text-6xl md:text-9xl font-serif font-medium leading-none mb-8 reveal delay-100">
+                Weeb CLI <span
+                    class="font-sans font-light text-2xl sm:text-4xl md:text-6xl text-subtext align-middle italic opacity-80">ile</span><br>
+                eşsiz deneyim.
+            </h1>
+
+            <p
+                class="text-base sm:text-lg md:text-xl text-subtext max-w-[90%] sm:max-w-xl font-sans font-light mb-8 leading-relaxed reveal delay-200">
+                Tarayıcı yok. Reklam yok. Dikkat dağıtıcı unsurlar yok.<br>
+                Sadece anime ve siz.
+            </p>
+
+            <div class="h-6 mt-4 text-xs font-mono text-white transition-opacity duration-300"
+                :class="copied ? 'opacity-100' : 'opacity-0'">
+                Komut kopyalandı.
+            </div>
+
+        </header>
+
+        <section id="features" class="py-32 px-6">
+            <div class="max-w-5xl mx-auto">
+
+                <div class="mb-20 text-center reveal">
+                    <h2 class="text-3xl font-serif font-medium mb-4">İşte, Weeb CLI</h2>
+                    <div class="h-px w-12 bg-white/20 mx-auto"></div>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+
+                    <div class="lg:col-span-2 card p-8 rounded-sm flex flex-col justify-between min-h-[240px] reveal">
+                        <div class="flex justify-between items-start">
+                            <h3 class="text-xl font-serif font-medium">Oynatıcı Özgürlüğü</h3>
+                            <i class="ph ph-film-strip text-2xl text-subtext"></i>
+                        </div>
+                        <p class="text-subtext text-sm leading-relaxed max-w-md mt-4">
+                            Sisteminizi yormayan MPV varsayılan olarak gelir, ancak alışkanlıklarınızı değiştirmenize
+                            gerek yok. Weeb CLI, sisteminizdeki VLC Player ile de tam uyumlu çalışır.
+                        </p>
+                    </div>
+
+                    <div class="card p-8 rounded-sm flex flex-col justify-between min-h-[240px] reveal delay-100">
+                        <div class="flex justify-between items-start">
+                            <h3 class="text-xl font-serif font-medium">AniList Sync</h3>
+                            <i class="ph ph-list-checks text-2xl text-subtext"></i>
+                        </div>
+                        <p class="text-subtext text-sm leading-relaxed mt-4">
+                            İki yönlü senkronizasyon. İzlediğiniz bölümler anında güncellenir, listeniz her zaman
+                            senkronize kalır.
+                        </p>
+                    </div>
+
+                    <div class="card p-8 rounded-sm flex flex-col justify-between min-h-[240px] reveal delay-200">
+                        <div class="flex justify-between items-start">
+                            <h3 class="text-xl font-serif font-medium">Akıllı İndirme</h3>
+                            <i class="ph ph-download-simple text-2xl text-subtext"></i>
+                        </div>
+                        <p class="text-subtext text-sm leading-relaxed mt-4">
+                            Sadece izlemekle kalmayın. Aria2 ve Ytdlp entegrasyonu ile tüm kuyruğunuzda ki tüm sezonları
+                            ve bölümleri arka planda yüksek hızla indirin, offline izleyin.
+                        </p>
+                    </div>
+
+                    <div
+                        class="lg:col-span-2 card p-8 rounded-sm flex flex-col justify-between min-h-[240px] reveal delay-300">
+                        <div class="flex justify-between items-start">
+                            <h3 class="text-xl font-serif font-medium">Discord Presence</h3>
+                            <i class="ph ph-discord-logo text-2xl text-subtext"></i>
+                        </div>
+                        <p class="text-subtext text-sm leading-relaxed max-w-md mt-4">
+                            Ne izlediğinizi (opsiyonel olarak) gösterin. Bölüm adı, geçen süre ve anime kapağı Discord
+                            profilinize şık bir şekilde yansır.
+                        </p>
+                    </div>
+
+                    <div
+                        class="lg:col-span-3 card p-8 rounded-sm flex flex-col md:flex-row justify-between items-center gap-6 min-h-[160px] reveal delay-400">
+                        <div class="flex-1">
+                            <h3 class="text-xl font-serif font-medium mb-2">Kontrol Sizde</h3>
+                            <p class="text-subtext text-sm leading-relaxed">
+                                Her şey ayarlanabilir. Varsayılan oynatıcı, indirme klasörü, altyazı dili veya RPC
+                                ayarları.
+                            </p>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+        </section>
+
+        <section id="install" class="py-32 px-6 border-t border-border/50 bg-[#050505]">
+            <div class="max-w-4xl mx-auto">
+                <div class="mb-16 text-center reveal">
+                    <h2 class="text-3xl font-serif font-medium mb-4">Kurulum & Başlangıç</h2>
+                    <p class="text-subtext font-light text-sm">Birkaç saniye içinde terminalinizde.</p>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    <!-- PyPI -->
+                    <div class="group reveal">
+                        <div
+                            class="bg-surface border border-border p-6 rounded-sm hover:border-gray-700 transition-colors h-full flex flex-col justify-between">
+                            <div class="flex items-center justify-between mb-4">
+                                <div class="flex items-center gap-3">
+                                    <i class="ph-bold ph-code text-xl"></i>
+                                    <div>
+                                        <h3 class="font-mono text-sm font-bold text-white">PyPI (Evrensel)</h3>
+                                        <div class="text-[10px] text-subtext mt-0.5">Python</div>
+                                    </div>
+                                </div>
+                                <span
+                                    class="text-[10px] font-mono border border-border px-2 py-1 rounded text-subtext">Pip</span>
+                            </div>
+                            <div class="bg-black/40 rounded p-4 font-mono text-xs text-gray-300 flex justify-between items-center group-hover:bg-black/60 transition-colors cursor-pointer"
+                                @click="copy('pip install weeb-cli')">
+                                <span class="select-text hover:text-white transition-colors truncate mr-2"
+                                    :class="copied === 'pip install weeb-cli' ? 'text-green-400' : ''">pip install
+                                    weeb-cli</span>
+                                <button class="text-subtext hover:text-white transition-colors shrink-0">
+                                    <i class="ph text-lg"
+                                        :class="copied === 'pip install weeb-cli' ? 'ph-check text-green-400' : 'ph-copy'"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Arch Linux -->
+                    <div class="group reveal delay-100">
+                        <div
+                            class="bg-surface border border-border p-6 rounded-sm hover:border-gray-700 transition-colors h-full flex flex-col justify-between">
+                            <div class="flex items-center justify-between mb-4">
+                                <div class="flex items-center gap-3">
+                                    <i class="ph-bold ph-linux-logo text-xl"></i>
+                                    <h3 class="font-mono text-sm font-bold text-white">Arch Linux (AUR)</h3>
+                                </div>
+                                <span
+                                    class="text-[10px] font-mono border border-border px-2 py-1 rounded text-subtext">Linux</span>
+                            </div>
+                            <div class="bg-black/40 rounded p-4 font-mono text-xs text-gray-300 flex justify-between items-center group-hover:bg-black/60 transition-colors cursor-pointer"
+                                @click="copy('yay -S weeb-cli')">
+                                <span class="select-text hover:text-white transition-colors truncate mr-2"
+                                    :class="copied === 'yay -S weeb-cli' ? 'text-green-400' : ''">yay -S weeb-cli</span>
+                                <button class="text-subtext hover:text-white transition-colors shrink-0">
+                                    <i class="ph text-lg"
+                                        :class="copied === 'yay -S weeb-cli' ? 'ph-check text-green-400' : 'ph-copy'"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Homebrew -->
+                    <div class="group reveal delay-100">
+                        <div
+                            class="bg-surface border border-border p-6 rounded-sm hover:border-gray-700 transition-colors h-full flex flex-col justify-between">
+                            <div class="flex items-center justify-between mb-4">
+                                <div class="flex items-center gap-3">
+                                    <i class="ph-bold ph-apple-logo text-xl"></i>
+                                    <div>
+                                        <h3 class="font-mono text-sm font-bold text-white">Homebrew</h3>
+                                        <div class="text-[10px] text-subtext mt-0.5">macOS/Linux</div>
+                                    </div>
+                                </div>
+                                <span
+                                    class="text-[10px] font-mono border border-border px-2 py-1 rounded text-subtext">Brew</span>
+                            </div>
+                            <div class="bg-black/40 rounded p-4 font-mono text-xs text-gray-300 flex justify-between items-center group-hover:bg-black/60 transition-colors cursor-pointer"
+                                @click="copy('brew install ewgsta/tap/weeb-cli')">
+                                <span class="select-text hover:text-white transition-colors truncate mr-2"
+                                    :class="copied === 'brew install ewgsta/tap/weeb-cli' ? 'text-green-400' : ''">brew
+                                    install
+                                    ewgsta/tap/weeb-cli</span>
+                                <button class="text-subtext hover:text-white transition-colors shrink-0">
+                                    <i class="ph text-lg"
+                                        :class="copied === 'brew install ewgsta/tap/weeb-cli' ? 'ph-check text-green-400' : 'ph-copy'"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Chocolatey -->
+                    <div class="group reveal delay-200">
+                        <div
+                            class="bg-surface border border-border p-6 rounded-sm hover:border-gray-700 transition-colors h-full flex flex-col justify-between">
+                            <div class="flex items-center justify-between mb-4">
+                                <div class="flex items-center gap-3">
+                                    <i class="ph-bold ph-cookie text-xl"></i>
+                                    <h3 class="font-mono text-sm font-bold text-white">Chocolatey</h3>
+                                </div>
+                                <span
+                                    class="text-[10px] font-mono border border-border px-2 py-1 rounded text-subtext">Windows</span>
+                            </div>
+                            <div class="bg-black/40 rounded p-4 font-mono text-xs text-gray-300 flex justify-between items-center group-hover:bg-black/60 transition-colors cursor-pointer"
+                                @click="copy('choco install weeb-cli')">
+                                <span class="select-text hover:text-white transition-colors truncate mr-2"
+                                    :class="copied === 'choco install weeb-cli' ? 'text-green-400' : ''">choco install
+                                    weeb-cli</span>
+                                <button class="text-subtext hover:text-white transition-colors shrink-0">
+                                    <i class="ph text-lg"
+                                        :class="copied === 'choco install weeb-cli' ? 'ph-check text-green-400' : 'ph-copy'"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Scoop -->
+                    <div class="group reveal delay-200 lg:col-span-2">
+                        <div
+                            class="bg-surface border border-border p-6 rounded-sm hover:border-gray-700 transition-colors h-full flex flex-col justify-between">
+                            <div class="flex items-center justify-between mb-4">
+                                <div class="flex items-center gap-3">
+                                    <i class="ph-bold ph-windows-logo text-xl"></i>
+                                    <h3 class="font-mono text-sm font-bold text-white">Scoop</h3>
+                                </div>
+                                <span
+                                    class="text-[10px] font-mono border border-border px-2 py-1 rounded text-subtext">Windows</span>
+                            </div>
+                            <div class="bg-black/40 rounded p-4 font-mono text-xs text-gray-300 flex justify-between items-center group-hover:bg-black/60 transition-colors cursor-pointer"
+                                @click="copy('scoop bucket add weeb https://github.com/ewgsta/scoop-bucket.git && scoop install weeb-cli')">
+                                <span class="select-text hover:text-white transition-colors truncate mr-2"
+                                    :class="copied === 'scoop bucket add weeb https://github.com/ewgsta/scoop-bucket.git && scoop install weeb-cli' ? 'text-green-400' : ''">scoop
+                                    bucket add weeb ... && scoop install weeb-cli</span>
+                                <button class="text-subtext hover:text-white transition-colors shrink-0">
+                                    <i class="ph text-lg"
+                                        :class="copied === 'scoop bucket add weeb https://github.com/ewgsta/scoop-bucket.git && scoop install weeb-cli' ? 'ph-check text-green-400' : 'ph-copy'"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="mt-8 mb-12 reveal delay-200">
+                    <h3 class="font-serif font-medium text-lg mb-6 text-center">Alternatif: Doğrudan İndir (Portable)
+                    </h3>
+                    <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                        <a href="https://github.com/ewgsta/weeb-cli/releases/latest/download/weeb-cli-Windows.exe"
+                            class="group bg-surface border border-border p-4 rounded-sm hover:border-gray-700 transition-colors flex flex-col items-center gap-3 text-center">
+                            <i
+                                class="ph-fill ph-windows-logo text-3xl text-blue-400 group-hover:scale-110 transition-transform"></i>
+                            <div>
+                                <div class="font-mono text-sm font-bold text-white">Windows</div>
+                                <div class="text-[10px] text-subtext">.exe (Portable)</div>
+                            </div>
+                            <i
+                                class="ph-bold ph-download-simple text-subtext group-hover:text-white transition-colors"></i>
+                        </a>
+                        <a href="https://github.com/ewgsta/weeb-cli/releases/latest/download/weeb-cli-Linux"
+                            class="group bg-surface border border-border p-4 rounded-sm hover:border-gray-700 transition-colors flex flex-col items-center gap-3 text-center">
+                            <i
+                                class="ph-fill ph-linux-logo text-3xl text-orange-400 group-hover:scale-110 transition-transform"></i>
+                            <div>
+                                <div class="font-mono text-sm font-bold text-white">Linux</div>
+                                <div class="text-[10px] text-subtext">Binary</div>
+                            </div>
+                            <i
+                                class="ph-bold ph-download-simple text-subtext group-hover:text-white transition-colors"></i>
+                        </a>
+                        <a href="https://github.com/ewgsta/weeb-cli/releases/latest/download/weeb-cli-macOS"
+                            class="group bg-surface border border-border p-4 rounded-sm hover:border-gray-700 transition-colors flex flex-col items-center gap-3 text-center">
+                            <i
+                                class="ph-fill ph-apple-logo text-3xl text-gray-400 group-hover:scale-110 transition-transform"></i>
+                            <div>
+                                <div class="font-mono text-sm font-bold text-white">macOS</div>
+                                <div class="text-[10px] text-subtext">Binary</div>
+                            </div>
+                            <i
+                                class="ph-bold ph-download-simple text-subtext group-hover:text-white transition-colors"></i>
+                        </a>
+                    </div>
+                </div>
+
+                <div class="mt-12 p-6 border border-dashed border-border rounded-sm reveal delay-300">
+                    <h3 class="font-serif font-medium text-lg mb-2">Nasıl Kullanılır?</h3>
+                    <p class="text-subtext text-sm mb-4 leading-relaxed">
+                        Kurulum tamamlandıktan sonra terminalinizde <code
+                            class="text-white bg-white/10 px-1 py-0.5 rounded select-text">weeb-cli</code> komutunu
+                        çalıştırarak arayüzü başlatabilir, anime keyfini terminalinizde yaşamaya başlayabilirsiniz.
+                    </p>
+                </div>
+
+                <div class="mt-24 flex flex-col items-center justify-center gap-6 reveal delay-300">
+                    <svg width="24" height="48" viewBox="0 0 32 64" fill="none" stroke="currentColor" stroke-width="1.5"
+                        stroke-linecap="round" stroke-linejoin="round" class="text-subtext/20">
+                        <path d="M16 0 C 22 15 22 30 16 40 C 13 45 16 55 16 64" />
+                        <path d="M12 58 L16 64 L20 58" />
+                    </svg>
+                    <a href="https://github.com/ewgsta/weeb-cli" target="_blank"
+                        class="group relative flex items-center gap-4 bg-surface text-white border border-border px-8 py-4 rounded-sm hover:border-gray-500 transition-colors duration-300">
+                        <i class="ph-fill ph-github-logo text-2xl"></i>
+                        <div class="flex flex-col text-left">
+                            <span class="font-serif font-medium leading-none">GitHub'da İncele</span>
+                            <span class="text-[10px] font-mono opacity-60 mt-1">v.0.0.1 - Geliştirme Aşaması</span>
+                        </div>
+                        <div class="ml-2 flex items-center gap-1.5 bg-white/5 px-3 py-1 rounded-full">
+                            <i
+                                class="ph-fill ph-star text-yellow-600 group-hover:text-yellow-500 transition-colors"></i>
+                            <span class="text-xs font-bold font-mono">Star</span>
+                        </div>
+                    </a>
+                    <p class="text-xs text-subtext font-mono max-w-xs text-center">
+                        Projemiz açık kaynaklıdır. Gelişimine katkıda bulunmak için yıldız verebilirsiniz.
+                    </p>
+                </div>
+
+            </div>
+        </section>
+
+        <footer class="py-12 border-t border-border mt-auto">
+            <div class="max-w-5xl mx-auto px-6 flex justify-between items-center text-xs font-mono text-subtext">
+                <div>
+                    <a href="https://creativecommons.org/licenses/by-nc-nd/4.0/" target="_blank"
+                        class="hover:text-white transition-colors">CC BY-NC-ND 4.0</a> &copy; 2026
+                </div>
+                <div class="flex gap-6">
+                    <a href="https://github.com/ewgsta/weeb-cli" class="hover:text-white transition-colors">GitHub</a>
+                    <a href="https://aur.archlinux.org/packages/weeb-cli"
+                        class="hover:text-white transition-colors">AUR</a>
+                    <a href="https://pypi.org/project/weeb-cli/" class="hover:text-white transition-colors">PyPI</a>
+                </div>
+            </div>
+        </footer>
+
+    </div>
+
+    <script>
+        const { createApp, ref, onMounted } = Vue;
+
+        document.addEventListener('contextmenu', event => event.preventDefault());
+        document.onkeydown = function (e) {
+            if (e.keyCode == 123) return false;
+            if (e.ctrlKey && e.shiftKey && e.keyCode == 'I'.charCodeAt(0)) return false;
+            if (e.ctrlKey && e.shiftKey && e.keyCode == 'C'.charCodeAt(0)) return false;
+            if (e.ctrlKey && e.shiftKey && e.keyCode == 'J'.charCodeAt(0)) return false;
+            if (e.ctrlKey && e.keyCode == 'U'.charCodeAt(0)) return false;
+        }
+
+        createApp({
+            setup() {
+                const scrolled = ref(false);
+                const copied = ref(null);
+
+
+                const copy = async (text) => {
+                    if (!text) return;
+                    try {
+                        await navigator.clipboard.writeText(text);
+                        copied.value = text;
+                    } catch (err) {
+                        const textArea = document.createElement("textarea");
+                        textArea.value = text;
+                        textArea.style.position = "fixed";
+                        document.body.appendChild(textArea);
+                        textArea.focus();
+                        textArea.select();
+                        try {
+                            document.execCommand('copy');
+                            copied.value = text;
+                        } catch (err) {
+                            console.error('Copy failed', err);
+                        }
+                        document.body.removeChild(textArea);
+                    }
+                    setTimeout(() => copied.value = null, 2000);
+                };
+
+                const initObserver = () => {
+                    const observer = new IntersectionObserver((entries) => {
+                        entries.forEach(entry => {
+                            if (entry.isIntersecting) {
+                                entry.target.classList.add('active');
+                            }
+                        });
+                    }, { threshold: 0.1 });
+
+                    document.querySelectorAll('.reveal').forEach(el => observer.observe(el));
+                };
+
+                onMounted(() => {
+                    const lenis = new Lenis({
+                        duration: 1.2,
+                        easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
+                        smooth: true
+                    });
+                    function raf(time) { lenis.raf(time); requestAnimationFrame(raf); }
+                    requestAnimationFrame(raf);
+
+                    window.addEventListener('scroll', () => {
+                        scrolled.value = window.scrollY > 50;
+                    });
+
+                    initObserver();
+                });
+
+                return { scrolled, copied, copy };
+            }
+        }).mount('#app');
+    </script>
+</body>
+
+</html>
