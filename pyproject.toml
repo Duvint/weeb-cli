@@ -14,6 +14,7 @@ classifiers = [
     "Operating System :: OS Independent",
     "Environment :: Console",
 ]
+keywords = ["anime", "weeb", "anime-download", "anizm", "anime-watch", "anime-watching", "anime-downloading", "anime-cli", "allanime", "animecix", "anime-indir", "anime-izle", "weeb-cli", "anime-izleme", "anime-indirme", "weebanime", "tranime"]
 requires-python = ">=3.8"
 dependencies = [
     "typer[all]",
