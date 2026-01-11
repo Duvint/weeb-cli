@@ -41,9 +41,25 @@ def start():
     }
     show_main_menu(actions)
 
+import sys
+import requests
+from rich.console import Console
+
+
+console = Console()
+
+def check_network():
+    try:
+        with console.status("", spinner="square"):
+            requests.get("https://www.google.com", timeout=3)
+    except:
+        console.print("[red]İnternet bağlantısı yok![/red]")
+        sys.exit(1)
+
 @app.callback(invoke_without_command=True)
 def main(ctx: typer.Context):
     if ctx.invoked_subcommand is None:
+        check_network()
         start()
 
 if __name__ == "__main__":
