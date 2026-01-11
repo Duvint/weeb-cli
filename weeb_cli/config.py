@@ -7,7 +7,10 @@ CONFIG_DIR = Path.home() / f".{APP_NAME}"
 CONFIG_FILE = CONFIG_DIR / "config.json"
 
 DEFAULT_CONFIG = {
-    "language": None  # None indicates setup hasn't run
+    "language": None,  
+    "aria2_enabled": True,
+    "ytdlp_enabled": True,
+    "scraping_source": ""       
 }
 
 class Config:
@@ -39,5 +42,4 @@ class Config:
         self.data[key] = value
         self._save(self.data)
 
-# Singleton instance
 config = Config()

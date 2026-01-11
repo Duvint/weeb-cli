@@ -7,15 +7,9 @@ from weeb_cli.i18n import i18n
 console = Console()
 
 def show_main_menu(action_map):
-    """
-    Shows the main menu.
-    action_map: dict of { "translation_key": function }
-    e.g. { "hello": say_hello } -> looks up "menu.options.hello"
-    """
     console.clear()
     show_header()
     
-    # Build choices mapping: Display Text -> Function
     choices_map = {}
     for key, func in action_map.items():
         display_text = i18n.get(f"menu.options.{key}")
@@ -30,6 +24,7 @@ def show_main_menu(action_map):
             i18n.get("menu.prompt"),
             choices=choices,
             use_indicator=True,
+            pointer=">",
             style=questionary.Style([
                 ('pointer', 'fg:cyan bold'),
                 ('highlighted', 'fg:cyan'),
@@ -38,14 +33,13 @@ def show_main_menu(action_map):
         ).ask()
         
         if answer == exit_text or answer is None:
-            console.print(f"[yellow]👋 {i18n.get('common.success')}...[/yellow]") # Using success as placeholder for bye or just keep generic
+            console.print(f"[yellow] {i18n.get('common.success')}...[/yellow]")
             sys.exit(0)
             
         action = choices_map.get(answer)
         if action:
             action()
             
-        # Loop back to menu
         show_main_menu(action_map)
         
     except KeyboardInterrupt:
