@@ -7,5 +7,8 @@ console = Console()
 def open_watchlist():
     console.clear()
     show_header(i18n.get("menu.options.watchlist"))
-    console.print("[yellow]Work in progress...[/yellow]")
-    input(i18n.get("common.continue_key"))
+    try:
+        console.print(f"[yellow]{i18n.get('common.wip')}[/yellow]")
+        input(i18n.get("common.continue_key"))
+    except KeyboardInterrupt:
+        pass

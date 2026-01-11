@@ -3,8 +3,6 @@ from rich.console import Console
 from weeb_cli.i18n import i18n
 from weeb_cli.config import config
 import time
-
-
 from weeb_cli.ui.header import show_header
 
 console = Console()
@@ -16,7 +14,7 @@ def open_settings():
         
         lang = config.get("language")
         source = config.get("scraping_source", "local")
-        display_source = "weeb" if source == "local" else source
+        display_source = "Weeb" if source == "local" else source
 
         aria2_state = i18n.get("common.enabled") if config.get("aria2_enabled") else i18n.get("common.disabled")
         ytdlp_state = i18n.get("common.enabled") if config.get("ytdlp_enabled") else i18n.get("common.disabled")
@@ -25,22 +23,24 @@ def open_settings():
         opt_source = f"{i18n.get('settings.source')} [{display_source}]"
         opt_aria2 = f"{i18n.get('settings.aria2')} [{aria2_state}]"
         opt_ytdlp = f"{i18n.get('settings.ytdlp')} [{ytdlp_state}]"
-        opt_back = i18n.get("settings.back")
         
-        choices = [opt_lang, opt_source, opt_aria2, opt_ytdlp, opt_back]
+        choices = [opt_lang, opt_source, opt_aria2, opt_ytdlp]
         
-        answer = questionary.select(
-            i18n.get("settings.title"),
-            choices=choices,
-            pointer=">",
-            use_shortcuts=False,
-            style=questionary.Style([
-                ('pointer', 'fg:cyan bold'),
-                ('highlighted', 'fg:cyan'),
-                ('selected', 'fg:cyan bold'),
-            ])
-        ).ask()
-        
+        try:
+            answer = questionary.select(
+                i18n.get("settings.title"),
+                choices=choices,
+                pointer=">",
+                use_shortcuts=False,
+                style=questionary.Style([
+                    ('pointer', 'fg:cyan bold'),
+                    ('highlighted', 'fg:cyan'),
+                    ('selected', 'fg:cyan bold'),
+                ])
+            ).ask()
+        except KeyboardInterrupt:
+            return
+
         if answer == opt_lang:
             change_language()
         elif answer == opt_source:
@@ -49,44 +49,50 @@ def open_settings():
             toggle_config("aria2_enabled", "Aria2")
         elif answer == opt_ytdlp:
             toggle_config("ytdlp_enabled", "yt-dlp")
-        else:
-            break
+        elif answer is None:
+            return
 
 def change_language():
     langs = {"Türkçe": "tr", "English": "en"}
-    selected = questionary.select(
-        "Select Language / Dil Seçiniz:",
-        choices=list(langs.keys()),
-        pointer=">",
-        use_shortcuts=False
-    ).ask()
-    
-    if selected:
-        i18n.set_language(langs[selected])
-        console.print(f"[green]{i18n.get('settings.language_changed')}[/green]")
-        time.sleep(1)
+    try:
+        selected = questionary.select(
+            "Select Language / Dil Seçiniz:",
+            choices=list(langs.keys()),
+            pointer=">",
+            use_shortcuts=False
+        ).ask()
+        
+        if selected:
+            i18n.set_language(langs[selected])
+            console.print(f"[green]{i18n.get('settings.language_changed')}[/green]")
+            time.sleep(1)
+    except KeyboardInterrupt:
+        pass
 
 def change_source():
     current_lang = config.get("language")
     
     sources = []
     if current_lang == "tr":
-        sources = ["weeb", "animecix", "turkanime", "anizle"]
+        sources = ["animecix", "turkanime", "anizle", "Weeb"]
     else:
-        sources = ["hianime", "allanime"]
+        sources = ["hianime", "allanime", "Weeb"]
         
-    selected = questionary.select(
-        i18n.get("settings.source"),
-        choices=sources,
-        pointer=">",
-        use_shortcuts=False
-    ).ask()
-    
-    if selected:
-        save_val = "local" if selected == "Weeb" else selected
-        config.set("scraping_source", save_val)
-        console.print(f"[green]{i18n.t('settings.source_changed', source=selected)}[/green]")
-        time.sleep(1)
+    try:
+        selected = questionary.select(
+            i18n.get("settings.source"),
+            choices=sources,
+            pointer=">",
+            use_shortcuts=False
+        ).ask()
+        
+        if selected:
+            save_val = "local" if selected == "Weeb" else selected
+            config.set("scraping_source", save_val)
+            console.print(f"[green]{i18n.t('settings.source_changed', source=selected)}[/green]")
+            time.sleep(1)
+    except KeyboardInterrupt:
+        pass
         
 def toggle_config(key, name):
     current = config.get(key)

@@ -15,7 +15,6 @@
         "source": "Select Scraping Source",
         "aria2": "Aria2 Downloader",
         "ytdlp": "yt-dlp Downloader",
-        "back": "Back to Main Menu",
         "language_changed": "Language changed to English.",
         "source_changed": "Source changed to {source}.",
         "toggle_on": "{tool} enabled.",
@@ -43,6 +42,9 @@
         "continue_key": "Press Enter to continue...",
         "success": "Goodbye!",
         "enabled": "Enabled",
-        "disabled": "Disabled"
+        "disabled": "Disabled",
+        "network_error": "No internet connection!",
+        "ctrl_c_hint": "Tip: Use Ctrl+C to go back. (Exit on Main Menu)",
+        "wip": "Work in progress..."
     }
 }

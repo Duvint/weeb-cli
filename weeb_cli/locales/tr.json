@@ -15,7 +15,6 @@
         "source": "Kaynak Seçimi",
         "aria2": "Aria2 İndirici",
         "ytdlp": "yt-dlp İndirici",
-        "back": "Ana Menüye Dön",
         "language_changed": "Dil Türkçe olarak değiştirildi.",
         "source_changed": "Kaynak {source} olarak değiştirildi.",
         "toggle_on": "{tool} aktif edildi.",
@@ -43,6 +42,9 @@
         "continue_key": "Devam etmek için Enter'a basın...",
         "success": "Görüşmek üzere!",
         "enabled": "Aktif",
-        "disabled": "Pasif"
+        "disabled": "Pasif",
+        "network_error": "İnternet bağlantısı yok!",
+        "ctrl_c_hint": "İpucu: Geri dönmek için Ctrl+C kullanın. (Ana menüde çıkış yapar)",
+        "wip": "Çalışma devam ediyor..."
     }
 }
