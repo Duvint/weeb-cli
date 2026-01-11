@@ -8,7 +8,7 @@ console = Console()
 
 def show_main_menu(action_map):
     console.clear()
-    show_header()
+    show_header("Weeb API")
     
     choices_map = {}
     for key, func in action_map.items():
@@ -33,7 +33,7 @@ def show_main_menu(action_map):
         ).ask()
         
         if answer == exit_text or answer is None:
-            console.print(f"[yellow]👋 {i18n.get('common.success')}...[/yellow]")
+            console.print(f"[yellow] {i18n.get('common.success')}...[/yellow]")
             sys.exit(0)
             
         action = choices_map.get(answer)

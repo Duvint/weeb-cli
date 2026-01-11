@@ -11,7 +11,6 @@ from weeb_cli.commands.setup import start_setup_wizard
 app = typer.Typer(add_completion=False)
 
 def run_setup():
-    """First run setup to select language and install dependencies."""
     langs = {
         "Türkçe": "tr",
         "English": "en"

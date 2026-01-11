@@ -4,19 +4,25 @@ from weeb_cli.i18n import i18n
 from weeb_cli.config import config
 import time
 
+
+from weeb_cli.ui.header import show_header
+
 console = Console()
 
 def open_settings():
     while True:
         console.clear()
+        show_header(i18n.get("settings.title"))
         
         lang = config.get("language")
         source = config.get("scraping_source", "local")
+        display_source = "weeb" if source == "local" else source
+
         aria2_state = i18n.get("common.enabled") if config.get("aria2_enabled") else i18n.get("common.disabled")
         ytdlp_state = i18n.get("common.enabled") if config.get("ytdlp_enabled") else i18n.get("common.disabled")
         
         opt_lang = i18n.get("settings.language")
-        opt_source = f"{i18n.get('settings.source')} [{source}]"
+        opt_source = f"{i18n.get('settings.source')} [{display_source}]"
         opt_aria2 = f"{i18n.get('settings.aria2')} [{aria2_state}]"
         opt_ytdlp = f"{i18n.get('settings.ytdlp')} [{ytdlp_state}]"
         opt_back = i18n.get("settings.back")
@@ -65,9 +71,9 @@ def change_source():
     
     sources = []
     if current_lang == "tr":
-        sources = ["animecix", "turkanime", "anizle", "local"]
+        sources = ["animecix", "turkanime", "anizle", "Weeb"]
     else:
-        sources = ["hianime", "allanime", "local"]
+        sources = ["hianime", "allanime"]
         
     selected = questionary.select(
         i18n.get("settings.source"),
@@ -77,7 +83,8 @@ def change_source():
     ).ask()
     
     if selected:
-        config.set("scraping_source", selected)
+        save_val = "local" if selected == "Weeb" else selected
+        config.set("scraping_source", save_val)
         console.print(f"[green]{i18n.t('settings.source_changed', source=selected)}[/green]")
         time.sleep(1)
         
