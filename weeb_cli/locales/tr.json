@@ -16,7 +16,19 @@
     },
     "setup": {
         "welcome": "Weeb CLI'a Hoş Geldiniz!",
-        "language_prompt": "Dil Seçiniz / Select Language"
+        "language_prompt": "Dil Seçiniz / Select Language",
+        "wizard_title": "Kurulum Sihirbazı",
+        "check": "{tool} kontrol ediliyor...",
+        "found": "Bulundu: {path}",
+        "not_found": "{tool} bulunamadı. Kurulum deneniyor...",
+        "installing": "{tool} kuruluyor...",
+        "downloading": "{tool} indiriliyor...",
+        "success": "{tool} başarıyla kuruldu.",
+        "failed": "{tool} kurulumu başarısız.",
+        "manual_required": "{tool} için otomatik kurulum başarısız. Lütfen manuel kurun.",
+        "complete": "Kurulum tamamlandı!",
+        "location": "Araçlar şuraya kuruldu: {path}",
+        "pkg_manager_try": "Paket yöneticisi deneniyor: {manager}..."
     },
     "hello": {
         "greeting": "Merhaba, Dünya!",

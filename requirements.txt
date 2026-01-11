@@ -7,3 +7,4 @@ pyinstaller
 pyfiglet
 setuptools
 wheel
+py7zr

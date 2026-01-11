@@ -28,3 +28,4 @@ ENV/
 env.bak/
 venv.bak/
 publish.py
+api.yaml

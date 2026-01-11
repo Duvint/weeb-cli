@@ -16,7 +16,19 @@
     },
     "setup": {
         "welcome": "Welcome to Weeb CLI!",
-        "language_prompt": "Select Language / Dil Seçiniz"
+        "language_prompt": "Select Language / Dil Seçiniz",
+        "wizard_title": "Setup Wizard",
+        "check": "Checking {tool}...",
+        "found": "Found: {path}",
+        "not_found": "{tool} not found. Attempting install...",
+        "installing": "Installing {tool}...",
+        "downloading": "Downloading {tool}...",
+        "success": "{tool} installed successfully.",
+        "failed": "Failed to install {tool}.",
+        "manual_required": "Automatic installation failed for {tool}. Please install manually.",
+        "complete": "Setup complete!",
+        "location": "Tools installed at: {path}",
+        "pkg_manager_try": "Trying package manager: {manager}..."
     },
     "hello": {
         "greeting": "Hello, World!",
