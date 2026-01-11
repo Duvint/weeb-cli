@@ -16,7 +16,7 @@ console = Console()
 
 def check_network():
     console.print(f"[dim]{i18n.t('common.ctrl_c_hint')}[/dim]")
-    with console.status("", spinner="square"):
+    with console.status("", spinner="dots"):
         time.sleep(1)
 
 def run_setup():
