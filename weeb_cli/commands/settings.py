@@ -71,7 +71,7 @@ def change_source():
     
     sources = []
     if current_lang == "tr":
-        sources = ["animecix", "turkanime", "anizle", "Weeb"]
+        sources = ["weeb", "animecix", "turkanime", "anizle"]
     else:
         sources = ["hianime", "allanime"]
         
