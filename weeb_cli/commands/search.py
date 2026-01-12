@@ -244,9 +244,12 @@ def handle_watch_flow(slug, details):
             
             if not stream_url:
                 console.print(f"[red]{i18n.get('details.stream_not_found')}[/red]")
+                if stream_resp:
+                    console.print(f"[dim]Debug: {stream_resp}[/dim]")
                 time.sleep(1.5)
                 continue
             
+            console.print(f"[dim]Stream: {stream_url[:80]}...[/dim]")
             console.print(f"[green]{i18n.get('details.player_starting')}[/green]")
             title = f"{details.get('title', 'Anime')} - Ep {ep_num}"
             

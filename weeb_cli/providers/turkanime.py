@@ -342,15 +342,19 @@ class TurkAnimeProvider(BaseProvider):
         anime_id_match = re.findall(r'serilerb/(.*?)\.jpg', html)
         internal_id = anime_id_match[0] if anime_id_match else ""
         
-        summary_match = re.findall(r'"ozet">(.*?)</p>', html)
-        description = summary_match[0] if summary_match else None
+        description = None
+        summary_match = re.search(r'class="ozet"[^>]*>(.*?)</p>', html, re.DOTALL | re.IGNORECASE)
+        if not summary_match:
+            summary_match = re.search(r'"ozet">(.*?)</p>', html, re.DOTALL)
+        if summary_match:
+            description = re.sub(r'<[^>]+>', '', summary_match.group(1)).strip()
         
         info = {}
-        info_table = re.findall(r'<div id="animedetay">(<table.*?</table>)', html)
+        info_table = re.findall(r'<div id="animedetay">(<table.*?</table>)', html, re.DOTALL)
         if info_table:
-            raw_m = re.findall(r"<tr>.*?<b>(.*?)</b>.*?width.*?>(.*?)</td>.*?</tr>", info_table[0])
+            raw_m = re.findall(r"<tr>.*?<b>(.*?)</b>.*?width.*?>(.*?)</td>.*?</tr>", info_table[0], re.DOTALL)
             for key, val in raw_m:
-                val = re.sub("<.*?>", "", val).strip()
+                val = re.sub(r"<[^>]*>", "", val).strip()
                 info[key] = val
         
         genres = []
