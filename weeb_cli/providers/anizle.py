@@ -17,6 +17,7 @@ try:
     from curl_cffi import requests as curl_requests
     HAS_CURL_CFFI = True
 except ImportError:
+    import requests as std_requests
     HAS_CURL_CFFI = False
 
 BASE_URL = "https://anizm.pro"
@@ -28,6 +29,12 @@ _anime_database: List[Dict[str, Any]] = []
 _database_loaded: bool = False
 _session = None
 
+DEFAULT_HEADERS = {
+    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+    "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8",
+    "Accept-Language": "tr-TR,tr;q=0.9,en-US;q=0.8,en;q=0.7",
+}
+
 
 def _get_session():
     global _session
@@ -35,9 +42,103 @@ def _get_session():
         if HAS_CURL_CFFI:
             _session = curl_requests.Session(impersonate="chrome110")
         else:
-            import requests
-            _session = requests.Session()
+            _session = std_requests.Session()
     return _session
+
+
+def _http_get(url: str, headers: Dict = None, timeout: int = 60):
+    session = _get_session()
+    h = {**DEFAULT_HEADERS}
+    if headers:
+        h.update(headers)
+    
+    try:
+        return session.get(url, headers=h, timeout=timeout)
+    except Exception:
+        return None
+
+
+def _http_post(url: str, headers: Dict = None, data: Dict = None, timeout: int = 60):
+    session = _get_session()
+    h = {**DEFAULT_HEADERS, "X-Requested-With": "XMLHttpRequest", "Accept": "application/json"}
+    if headers:
+        h.update(headers)
+    
+    try:
+        return session.post(url, headers=h, data=data, timeout=timeout)
+    except Exception:
+        return None
+
+
+def _load_database() -> List[Dict[str, Any]]:
+    global _anime_database, _database_loaded
+    
+    if _database_loaded:
+        return _anime_database
+    
+    try:
+        response = _http_get(ANIME_LIST_URL, timeout=120)
+        if response and response.status_code == 200:
+            data = response.json()
+            if isinstance(data, list):
+                _anime_database = data
+                _database_loaded = True
+    except Exception:
+        pass
+    
+    return _anime_database
+
+
+def _unpack_js(p: str, a: int, c: int, k: List[str]) -> str:
+    def e(c: int, a: int) -> str:
+        first = '' if c < a else e(c // a, a)
+        c = c % a
+        if c > 35:
+            second = chr(c + 29)
+        elif c > 9:
+            second = chr(c + 87)
+        else:
+            second = str(c)
+        return first + second
+    
+    d = {}
+    temp_c = c
+    while temp_c:
+        temp_c -= 1
+        key = e(temp_c, a)
+        d[key] = k[temp_c] if temp_c < len(k) and k[temp_c] else key
+    
+    def replace_func(match):
+        return d.get(match.group(0), match.group(0))
+    
+    return re.sub(r'\b\w+\b', replace_func, p)
+
+
+def _extract_fireplayer_id(player_html: str) -> Optional[str]:
+    eval_match = re.search(
+        r"eval\(function\(p,a,c,k,e,d\)\{.*?\}return p\}\('(.*?)',(\d+),(\d+),'([^']+)'\.split\('\|'\),0,\{\}\)\)",
+        player_html, re.S
+    )
+    
+    if eval_match:
+        p = eval_match.group(1)
+        a = int(eval_match.group(2))
+        c = int(eval_match.group(3))
+        k = eval_match.group(4).split('|')
+        
+        try:
+            decoded = _unpack_js(p, a, c, k)
+            id_match = re.search(r'FirePlayer\s*\(\s*["\']([a-f0-9]{32})["\']', decoded)
+            if id_match:
+                return id_match.group(1)
+        except Exception:
+            pass
+    
+    fp_direct = re.search(r'FirePlayer\s*\(["\']([a-f0-9]{32})["\']', player_html)
+    if fp_direct:
+        return fp_direct.group(1)
+    
+    return None
 
 
 @register_provider("anizle", lang="tr", region="TR")
@@ -45,12 +146,9 @@ class AnizleProvider(BaseProvider):
     
     def __init__(self):
         super().__init__()
-        self.headers.update({
-            "Accept-Language": "tr-TR,tr;q=0.9,en-US;q=0.8,en;q=0.7",
-        })
     
     def search(self, query: str) -> List[AnimeResult]:
-        database = self._load_database()
+        database = _load_database()
         if not database:
             return []
         
@@ -64,18 +162,21 @@ class AnizleProvider(BaseProvider):
             max_score = max(scores)
             
             if max_score > 0.3:
+                year_str = anime.get("info_year", "")
+                year = int(year_str) if year_str and str(year_str).isdigit() else None
+                
                 results.append((max_score, AnimeResult(
                     id=anime.get("info_slug", ""),
                     title=anime.get("info_title", ""),
                     cover=self._get_poster_url(anime.get("info_poster", "")),
-                    year=int(anime.get("info_year")) if anime.get("info_year", "").isdigit() else None
+                    year=year
                 )))
         
         results.sort(key=lambda x: x[0], reverse=True)
         return [r[1] for r in results[:20]]
     
     def get_details(self, anime_id: str) -> Optional[AnimeDetails]:
-        database = self._load_database()
+        database = _load_database()
         anime_data = None
         
         for anime in database:
@@ -83,11 +184,14 @@ class AnizleProvider(BaseProvider):
                 anime_data = anime
                 break
         
+        episodes = self.get_episodes(anime_id)
+        
         if not anime_data:
             return AnimeDetails(
                 id=anime_id,
                 title=anime_id.replace("-", " ").title(),
-                episodes=self.get_episodes(anime_id)
+                episodes=episodes,
+                total_episodes=len(episodes)
             )
         
         categories = []
@@ -95,7 +199,8 @@ class AnizleProvider(BaseProvider):
             if isinstance(cat, dict) and "tag_title" in cat:
                 categories.append(cat["tag_title"])
         
-        episodes = self.get_episodes(anime_id)
+        year_str = anime_data.get("info_year", "")
+        year = int(year_str) if year_str and str(year_str).isdigit() else None
         
         return AnimeDetails(
             id=anime_id,
@@ -103,24 +208,19 @@ class AnizleProvider(BaseProvider):
             description=anime_data.get("info_summary"),
             cover=self._get_poster_url(anime_data.get("info_poster", "")),
             genres=categories,
-            year=int(anime_data.get("info_year")) if anime_data.get("info_year", "").isdigit() else None,
+            year=year,
             episodes=episodes,
             total_episodes=len(episodes)
         )
     
     def get_episodes(self, anime_id: str) -> List[Episode]:
-        session = _get_session()
         url = f"{BASE_URL}/{anime_id}"
+        response = _http_get(url)
         
-        try:
-            response = session.get(url, headers=self.headers, timeout=30)
-            html = response.text
-        except Exception:
+        if not response or response.status_code != 200:
             return []
         
-        if not html:
-            return []
-        
+        html = response.text
         episodes = []
         seen = set()
         
@@ -183,7 +283,7 @@ class AnizleProvider(BaseProvider):
         streams = []
         with ThreadPoolExecutor(max_workers=4) as executor:
             futures = {executor.submit(self._process_video, v): v for v in all_videos[:8]}
-            for future in as_completed(futures):
+            for future in as_completed(futures, timeout=60):
                 try:
                     result = future.result(timeout=30)
                     if result:
@@ -192,24 +292,6 @@ class AnizleProvider(BaseProvider):
                     pass
         
         return streams
-    
-    def _load_database(self) -> List[Dict[str, Any]]:
-        global _anime_database, _database_loaded
-        
-        if _database_loaded:
-            return _anime_database
-        
-        try:
-            session = _get_session()
-            response = session.get(ANIME_LIST_URL, headers=self.headers, timeout=120)
-            data = response.json()
-            if isinstance(data, list):
-                _anime_database = data
-                _database_loaded = True
-        except Exception:
-            pass
-        
-        return _anime_database
     
     def _similarity(self, query: str, text: str) -> float:
         if not text:
@@ -230,18 +312,14 @@ class AnizleProvider(BaseProvider):
         return f"https://anizm.pro/uploads/img/{poster}"
     
     def _get_translators(self, episode_slug: str) -> List[Dict[str, str]]:
-        session = _get_session()
-        url = f"{API_BASE_URL}/{episode_slug}"
+        clean_slug = episode_slug.lstrip("/")
+        url = f"{API_BASE_URL}/{clean_slug}"
         
-        try:
-            response = session.get(url, headers=self.headers, timeout=30)
-            html = response.text
-        except Exception:
+        response = _http_get(url)
+        if not response or response.status_code != 200:
             return []
         
-        if not html:
-            return []
-        
+        html = response.text
         translators = []
         pattern = r'translator="([^"]+)"[^>]*data-fansub-name="([^"]*)"'
         matches = re.findall(pattern, html)
@@ -255,19 +333,19 @@ class AnizleProvider(BaseProvider):
         return translators
     
     def _get_translator_videos(self, translator_url: str) -> List[Dict[str, str]]:
-        session = _get_session()
+        response = _http_get(
+            translator_url,
+            headers={
+                "X-Requested-With": "XMLHttpRequest",
+                "Accept": "application/json",
+                "Referer": API_BASE_URL,
+            }
+        )
+        
+        if not response or response.status_code != 200:
+            return []
         
         try:
-            response = session.get(
-                translator_url,
-                headers={
-                    **self.headers,
-                    "X-Requested-With": "XMLHttpRequest",
-                    "Accept": "application/json",
-                    "Referer": API_BASE_URL,
-                },
-                timeout=15
-            )
             data = response.json()
             html = data.get("data", "")
             
@@ -278,28 +356,34 @@ class AnizleProvider(BaseProvider):
             for video_url, video_name in matches:
                 videos.append({"url": video_url, "name": video_name or "Player"})
             
+            if not videos:
+                pattern2 = r'data-video-name="([^"]*)"[^>]*video="([^"]+)"'
+                matches2 = re.findall(pattern2, html)
+                for video_name, video_url in matches2:
+                    videos.append({"url": video_url, "name": video_name or "Player"})
+            
             return videos
         except Exception:
             return []
     
     def _process_video(self, video_info: Dict[str, str]) -> Optional[StreamLink]:
-        session = _get_session()
-        
         try:
             video_url = video_info["url"]
             fansub = video_info["fansub"]
             name = video_info["name"]
             
-            response = session.get(
+            response = _http_get(
                 video_url,
                 headers={
-                    **self.headers,
                     "X-Requested-With": "XMLHttpRequest",
                     "Accept": "application/json",
                     "Referer": API_BASE_URL,
-                },
-                timeout=15
+                }
             )
+            
+            if not response or response.status_code != 200:
+                return None
+            
             data = response.json()
             player_html = data.get("player", "")
             
@@ -309,37 +393,28 @@ class AnizleProvider(BaseProvider):
             
             player_id = iframe_match.group(1)
             
-            player_response = session.get(
+            player_response = _http_get(
                 f"{API_BASE_URL}/player/{player_id}",
-                headers={**self.headers, "Referer": f"{API_BASE_URL}/"},
-                timeout=15
+                headers={"Referer": f"{API_BASE_URL}/"}
             )
             
-            fireplayer_id = self._extract_fireplayer_id(player_response.text)
+            if not player_response or player_response.status_code != 200:
+                return None
+            
+            fireplayer_id = _extract_fireplayer_id(player_response.text)
             if not fireplayer_id:
                 return None
             
-            if HAS_CURL_CFFI:
-                video_response = session.post(
-                    f"{PLAYER_BASE_URL}/player/index.php?data={fireplayer_id}&do=getVideo",
-                    headers={
-                        **self.headers,
-                        "Referer": f"{PLAYER_BASE_URL}/player/{fireplayer_id}",
-                        "Origin": PLAYER_BASE_URL,
-                    },
-                    timeout=15
-                )
-            else:
-                import requests
-                video_response = requests.post(
-                    f"{PLAYER_BASE_URL}/player/index.php?data={fireplayer_id}&do=getVideo",
-                    headers={
-                        **self.headers,
-                        "Referer": f"{PLAYER_BASE_URL}/player/{fireplayer_id}",
-                        "Origin": PLAYER_BASE_URL,
-                    },
-                    timeout=15
-                )
+            video_response = _http_post(
+                f"{PLAYER_BASE_URL}/player/index.php?data={fireplayer_id}&do=getVideo",
+                headers={
+                    "Referer": f"{PLAYER_BASE_URL}/player/{fireplayer_id}",
+                    "Origin": PLAYER_BASE_URL,
+                }
+            )
+            
+            if not video_response or video_response.status_code != 200:
+                return None
             
             video_data = video_response.json()
             
@@ -361,53 +436,3 @@ class AnizleProvider(BaseProvider):
             
         except Exception:
             return None
-    
-    def _extract_fireplayer_id(self, html: str) -> Optional[str]:
-        eval_match = re.search(
-            r"eval\(function\(p,a,c,k,e,d\)\{.*?\}return p\}\('(.*?)',(\d+),(\d+),'([^']+)'\.split\('\|'\),0,\{\}\)\)",
-            html, re.S
-        )
-        
-        if eval_match:
-            p = eval_match.group(1)
-            a = int(eval_match.group(2))
-            c = int(eval_match.group(3))
-            k = eval_match.group(4).split('|')
-            
-            try:
-                decoded = self._unpack_js(p, a, c, k)
-                id_match = re.search(r'FirePlayer\s*\(\s*["\']([a-f0-9]{32})["\']', decoded)
-                if id_match:
-                    return id_match.group(1)
-            except Exception:
-                pass
-        
-        fp_direct = re.search(r'FirePlayer\s*\(["\']([a-f0-9]{32})["\']', html)
-        if fp_direct:
-            return fp_direct.group(1)
-        
-        return None
-    
-    def _unpack_js(self, p: str, a: int, c: int, k: List[str]) -> str:
-        def e(c: int, a: int) -> str:
-            first = '' if c < a else e(c // a, a)
-            c = c % a
-            if c > 35:
-                second = chr(c + 29)
-            elif c > 9:
-                second = chr(c + 87)
-            else:
-                second = str(c)
-            return first + second
-        
-        d = {}
-        temp_c = c
-        while temp_c:
-            temp_c -= 1
-            key = e(temp_c, a)
-            d[key] = k[temp_c] if temp_c < len(k) and k[temp_c] else key
-        
-        def replace_func(match):
-            return d.get(match.group(0), match.group(0))
-        
-        return re.sub(r'\b\w+\b', replace_func, p)

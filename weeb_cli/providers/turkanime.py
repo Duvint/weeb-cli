@@ -97,16 +97,16 @@ def _obtain_key() -> bytes:
         return _key_cache
     
     if HAS_APPDIRS:
-        cache_file = os.path.join(user_cache_dir(), "turkanimu_key.cache")
-        if os.path.isfile(cache_file):
-            try:
+        try:
+            cache_file = os.path.join(user_cache_dir(), "turkanimu_key.cache")
+            if os.path.isfile(cache_file):
                 with open(cache_file, "r", encoding="utf-8") as f:
                     cached = f.read().strip().encode()
                     if cached:
                         _key_cache = cached
                         return _key_cache
-            except Exception:
-                pass
+        except Exception:
+            pass
     
     try:
         embed_html = _fetch("/embed/#/url/")
@@ -184,16 +184,16 @@ def _decrypt_cipher(key: bytes, data: bytes) -> str:
 
 def _get_real_url(url_cipher: str) -> str:
     if HAS_APPDIRS:
-        cache_file = os.path.join(user_cache_dir(), "turkanimu_key.cache")
-        if os.path.isfile(cache_file):
-            try:
+        try:
+            cache_file = os.path.join(user_cache_dir(), "turkanimu_key.cache")
+            if os.path.isfile(cache_file):
                 with open(cache_file, "r", encoding="utf-8") as f:
                     cached_key = f.read().strip().encode()
                     plaintext = _decrypt_cipher(cached_key, url_cipher.encode())
                     if plaintext:
                         return "https:" + json.loads(plaintext)
-            except Exception:
-                pass
+        except Exception:
+            pass
     
     key = _obtain_key()
     if not key:

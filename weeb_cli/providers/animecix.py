@@ -1,16 +1,44 @@
+import json
 import time
-import requests
-from urllib.parse import urlparse, parse_qs
+import urllib.request
+from urllib.parse import urlparse, parse_qs, quote, urlsplit, urlunsplit
 from typing import List, Optional
 
 from weeb_cli.providers.base import (
-    BaseProvider, 
-    AnimeResult, 
-    AnimeDetails, 
-    Episode, 
+    BaseProvider,
+    AnimeResult,
+    AnimeDetails,
+    Episode,
     StreamLink
 )
 from weeb_cli.providers.registry import register_provider
+
+BASE_URL = "https://animecix.tv/"
+ALT_URL = "https://mangacix.net/"
+VIDEO_PLAYERS = ["tau-video.xyz", "sibnet"]
+
+HEADERS = {
+    "Accept": "application/json",
+    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
+}
+
+
+def _http_get(url: str, timeout: int = 15) -> bytes:
+    sp = urlsplit(url)
+    safe_path = quote(sp.path, safe="/:%@")
+    safe_url = urlunsplit((sp.scheme, sp.netloc, safe_path, sp.query, sp.fragment))
+    
+    req = urllib.request.Request(safe_url, headers=HEADERS)
+    with urllib.request.urlopen(req, timeout=timeout) as resp:
+        return resp.read()
+
+
+def _get_json(url: str, timeout: int = 15):
+    try:
+        data = _http_get(url, timeout)
+        return json.loads(data)
+    except Exception:
+        return None
 
 
 @register_provider("animecix", lang="tr", region="TR")
@@ -18,36 +46,41 @@ class AnimeCixProvider(BaseProvider):
     
     def __init__(self):
         super().__init__()
-        self.base_url = "https://animecix.tv"
-        self.api_url = "https://mangacix.net"
-        self.video_host = "tau-video.xyz"
         
     def search(self, query: str) -> List[AnimeResult]:
-        url = f"{self.base_url}/secure/search/{query}"
-        params = {"type": "", "limit": "20"}
+        q = (query or "").strip().replace(" ", "-")
+        q_enc = quote(q, safe="-")
+        url = f"{BASE_URL}secure/search/{q_enc}?type=&limit=20"
         
-        data = self._request(url, params)
+        data = _get_json(url)
         if not data or "results" not in data:
             return []
         
         results = []
         for item in data["results"]:
-            results.append(AnimeResult(
-                id=str(item.get("id", "")),
-                title=item.get("name", ""),
-                type=self._parse_type(item.get("title_type", "")),
-                cover=item.get("poster"),
-                year=item.get("year")
-            ))
+            name = item.get("name")
+            _id = item.get("id")
+            if name and _id:
+                results.append(AnimeResult(
+                    id=str(_id),
+                    title=str(name),
+                    type=self._parse_type(item.get("title_type", ""))
+                ))
         
         return results
     
     def get_details(self, anime_id: str) -> Optional[AnimeDetails]:
-        url = f"{self.api_url}/secure/titles/{anime_id}"
-        data = self._request(url)
+        url = f"{ALT_URL}secure/titles/{anime_id}"
+        data = _get_json(url)
         
         if not data or "title" not in data:
-            return None
+            episodes = self.get_episodes(anime_id)
+            return AnimeDetails(
+                id=anime_id,
+                title=anime_id,
+                episodes=episodes,
+                total_episodes=len(episodes)
+            )
         
         title_data = data["title"]
         episodes = self.get_episodes(anime_id)
@@ -59,146 +92,112 @@ class AnimeCixProvider(BaseProvider):
             cover=title_data.get("poster"),
             genres=[g.get("name", "") for g in title_data.get("genres", [])],
             year=title_data.get("year"),
-            status=self._parse_status(title_data.get("status")),
             episodes=episodes,
             total_episodes=len(episodes)
         )
     
     def get_episodes(self, anime_id: str) -> List[Episode]:
-        seasons = self._get_seasons(anime_id)
+        try:
+            safe_id = int(anime_id)
+        except (ValueError, TypeError):
+            safe_id = hash(str(anime_id)) % 1000000 if anime_id else 0
+        
+        seasons = self._get_seasons(safe_id)
         episodes = []
         seen = set()
         
-        for season_idx in seasons:
-            season_eps = self._get_season_episodes(anime_id, season_idx + 1)
+        for sidx in seasons:
+            url = f"{ALT_URL}secure/related-videos?episode=1&season={sidx+1}&titleId={safe_id}&videoId=637113"
+            data = _get_json(url)
             
-            for ep in season_eps:
-                ep_name = ep.get("name", "")
-                if ep_name not in seen:
-                    seen.add(ep_name)
-                    ep_num = self._parse_episode_number(ep_name, len(episodes) + 1)
-                    
-                    episodes.append(Episode(
-                        id=ep.get("url", ""),
-                        number=ep_num,
-                        title=ep_name,
-                        season=season_idx + 1,
-                        url=ep.get("url")
-                    ))
+            if not data or "videos" not in data:
+                continue
+            
+            for v in data["videos"]:
+                name = v.get("name")
+                ep_url = v.get("url")
+                
+                if not name or not ep_url:
+                    continue
+                if name in seen:
+                    continue
+                
+                seen.add(name)
+                ep_num = self._parse_episode_number(name, len(episodes) + 1)
+                
+                episodes.append(Episode(
+                    id=ep_url,
+                    number=ep_num,
+                    title=name,
+                    season=sidx + 1,
+                    url=ep_url
+                ))
         
         return episodes
     
     def get_streams(self, anime_id: str, episode_id: str) -> List[StreamLink]:
-        stream_url = f"{self.base_url}{episode_id}"
+        embed_path = episode_id.lstrip("/")
+        full_url = f"{BASE_URL}{quote(embed_path, safe='/:?=&')}"
         
         try:
-            response = requests.get(
-                stream_url, 
-                headers=self.headers, 
-                allow_redirects=True,
-                timeout=15
-            )
-            response.raise_for_status()
+            req = urllib.request.Request(full_url, headers=HEADERS)
+            resp = urllib.request.urlopen(req, timeout=15)
+            final_url = resp.geturl()
             
-            time.sleep(2)
+            time.sleep(1)
             
-            final_url = response.url
-            parsed = urlparse(final_url)
+            p = urlparse(final_url)
+            parts = p.path.strip("/").split("/")
             
-            path_parts = parsed.path.split('/')
-            if len(path_parts) < 3:
+            if len(parts) < 2:
                 return []
-                
-            embed_id = path_parts[2]
-            query_params = parse_qs(parsed.query)
-            vid = query_params.get('vid', [None])[0]
+            
+            embed_id = parts[1] if parts[0] == "embed" else parts[0]
+            qs = parse_qs(p.query)
+            vid = (qs.get("vid") or [None])[0]
             
             if not embed_id or not vid:
                 return []
             
-            api_url = f"https://{self.video_host}/api/video/{embed_id}"
-            video_data = self._request(api_url, {"vid": vid})
+            api_url = f"https://{VIDEO_PLAYERS[0]}/api/video/{embed_id}?vid={vid}"
+            video_data = _get_json(api_url)
             
             if not video_data or "urls" not in video_data:
                 return []
             
             streams = []
-            for item in video_data["urls"]:
-                url = item.get("url")
+            for u in video_data["urls"]:
+                label = u.get("label")
+                url = u.get("url")
                 if url:
                     streams.append(StreamLink(
                         url=url,
-                        quality=item.get("label", "auto"),
+                        quality=label or "auto",
                         server="tau-video"
                     ))
             
             return streams
             
-        except requests.RequestException:
+        except Exception:
             return []
     
-    def get_subtitles(self, anime_id: str, season: int, episode_idx: int) -> Optional[str]:
-        url = f"{self.api_url}/secure/related-videos"
-        params = {
-            "episode": "1",
-            "season": str(season),
-            "titleId": anime_id,
-            "videoId": "637113"
-        }
+    def _get_seasons(self, title_id: int) -> List[int]:
+        url = f"{ALT_URL}secure/related-videos?episode=1&season=1&titleId={title_id}&videoId=637113"
+        data = _get_json(url)
         
-        data = self._request(url, params)
-        if not data or "videos" not in data:
-            return None
-        
-        videos = data["videos"]
-        if episode_idx >= len(videos):
-            return None
-        
-        captions = videos[episode_idx].get("captions", [])
-        
-        for cap in captions:
-            if cap.get("language") == "tr":
-                return cap.get("url")
-        
-        return captions[0].get("url") if captions else None
-    
-    def _get_seasons(self, anime_id: str) -> List[int]:
-        url = f"{self.api_url}/secure/related-videos"
-        params = {
-            "episode": "1",
-            "season": "1", 
-            "titleId": anime_id,
-            "videoId": "637113"
-        }
-        
-        data = self._request(url, params)
         if not data or "videos" not in data:
             return [0]
         
-        videos = data["videos"]
+        videos = data.get("videos") or []
         if not videos:
             return [0]
         
-        seasons = videos[0].get("title", {}).get("seasons", [])
-        if isinstance(seasons, list) and seasons:
+        title = (videos[0] or {}).get("title") or {}
+        seasons = title.get("seasons") or []
+        
+        if seasons:
             return list(range(len(seasons)))
-        
         return [0]
-    
-    def _get_season_episodes(self, anime_id: str, season: int) -> List[dict]:
-        url = f"{self.api_url}/secure/related-videos"
-        params = {
-            "episode": "1",
-            "season": str(season),
-            "titleId": anime_id,
-            "videoId": "637113"
-        }
-        
-        data = self._request(url, params)
-        if not data or "videos" not in data:
-            return []
-        
-        return data["videos"]
     
     def _parse_type(self, title_type: str) -> str:
         title_type = (title_type or "").lower()
@@ -206,19 +205,10 @@ class AnimeCixProvider(BaseProvider):
             return "movie"
         if "ova" in title_type:
             return "ova"
-        if "special" in title_type:
-            return "special"
         return "series"
-    
-    def _parse_status(self, status: str) -> str:
-        status = (status or "").lower()
-        if "ongoing" in status or "devam" in status:
-            return "ongoing"
-        return "completed"
     
     def _parse_episode_number(self, name: str, fallback: int) -> int:
         import re
-        
         patterns = [
             r'(?:bölüm|episode|ep)\s*(\d+)',
             r'(\d+)\.\s*(?:bölüm|episode)',
