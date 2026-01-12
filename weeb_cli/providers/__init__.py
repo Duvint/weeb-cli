@@ -7,6 +7,8 @@ from weeb_cli.providers.registry import (
 )
 
 from weeb_cli.providers import animecix
+from weeb_cli.providers import anizle
+from weeb_cli.providers import turkanime
 
 __all__ = [
     "BaseProvider",
