@@ -1,12 +1,10 @@
 from weeb_cli.services.scraper import scraper
 
 def get_details(anime_id):
-    """Anime detaylarını getir - dict döndürür"""
     details = scraper.get_details(anime_id)
     if not details:
         return None
     
-    # Eski format uyumluluğu için dict'e çevir
     return {
         "id": details.id,
         "slug": details.id,

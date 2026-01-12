@@ -1,10 +1,3 @@
-"""
-AnimeCix Provider - Türkçe anime kaynağı
-
-Website: https://animecix.tv/
-API: JSON tabanlı, Cloudflare korumasız
-"""
-
 import time
 import requests
 from urllib.parse import urlparse, parse_qs
@@ -22,7 +15,6 @@ from weeb_cli.providers.registry import register_provider
 
 @register_provider("animecix", lang="tr", region="TR")
 class AnimeCixProvider(BaseProvider):
-    """AnimeCix scraper implementation"""
     
     def __init__(self):
         super().__init__()
@@ -31,7 +23,6 @@ class AnimeCixProvider(BaseProvider):
         self.video_host = "tau-video.xyz"
         
     def search(self, query: str) -> List[AnimeResult]:
-        """Anime ara"""
         url = f"{self.base_url}/secure/search/{query}"
         params = {"type": "", "limit": "20"}
         
@@ -52,7 +43,6 @@ class AnimeCixProvider(BaseProvider):
         return results
     
     def get_details(self, anime_id: str) -> Optional[AnimeDetails]:
-        """Anime detaylarını getir"""
         url = f"{self.api_url}/secure/titles/{anime_id}"
         data = self._request(url)
         
@@ -75,7 +65,6 @@ class AnimeCixProvider(BaseProvider):
         )
     
     def get_episodes(self, anime_id: str) -> List[Episode]:
-        """Bölüm listesini getir"""
         seasons = self._get_seasons(anime_id)
         episodes = []
         seen = set()
@@ -87,8 +76,6 @@ class AnimeCixProvider(BaseProvider):
                 ep_name = ep.get("name", "")
                 if ep_name not in seen:
                     seen.add(ep_name)
-                    
-                    # Episode number'ı parse et
                     ep_num = self._parse_episode_number(ep_name, len(episodes) + 1)
                     
                     episodes.append(Episode(
@@ -102,8 +89,6 @@ class AnimeCixProvider(BaseProvider):
         return episodes
     
     def get_streams(self, anime_id: str, episode_id: str) -> List[StreamLink]:
-        """Stream linklerini getir"""
-        # episode_id aslında URL path
         stream_url = f"{self.base_url}{episode_id}"
         
         try:
@@ -115,13 +100,11 @@ class AnimeCixProvider(BaseProvider):
             )
             response.raise_for_status()
             
-            # Redirect sonrası URL'den embed bilgilerini çıkar
-            time.sleep(2)  # Rate limit için bekle
+            time.sleep(2)
             
             final_url = response.url
             parsed = urlparse(final_url)
             
-            # /embed/{embed_id}?vid={vid} formatı
             path_parts = parsed.path.split('/')
             if len(path_parts) < 3:
                 return []
@@ -133,7 +116,6 @@ class AnimeCixProvider(BaseProvider):
             if not embed_id or not vid:
                 return []
             
-            # Video API'den stream URL'lerini al
             api_url = f"https://{self.video_host}/api/video/{embed_id}"
             video_data = self._request(api_url, {"vid": vid})
             
@@ -156,7 +138,6 @@ class AnimeCixProvider(BaseProvider):
             return []
     
     def get_subtitles(self, anime_id: str, season: int, episode_idx: int) -> Optional[str]:
-        """Altyazı URL'si getir"""
         url = f"{self.api_url}/secure/related-videos"
         params = {
             "episode": "1",
@@ -175,18 +156,13 @@ class AnimeCixProvider(BaseProvider):
         
         captions = videos[episode_idx].get("captions", [])
         
-        # Türkçe altyazı tercih et
         for cap in captions:
             if cap.get("language") == "tr":
                 return cap.get("url")
         
-        # Yoksa ilk altyazıyı döndür
         return captions[0].get("url") if captions else None
     
-    # Private helper methods
-    
     def _get_seasons(self, anime_id: str) -> List[int]:
-        """Sezon listesini getir"""
         url = f"{self.api_url}/secure/related-videos"
         params = {
             "episode": "1",
@@ -210,7 +186,6 @@ class AnimeCixProvider(BaseProvider):
         return [0]
     
     def _get_season_episodes(self, anime_id: str, season: int) -> List[dict]:
-        """Belirli sezonun bölümlerini getir"""
         url = f"{self.api_url}/secure/related-videos"
         params = {
             "episode": "1",
@@ -226,7 +201,6 @@ class AnimeCixProvider(BaseProvider):
         return data["videos"]
     
     def _parse_type(self, title_type: str) -> str:
-        """Anime tipini normalize et"""
         title_type = (title_type or "").lower()
         if "movie" in title_type or "film" in title_type:
             return "movie"
@@ -237,17 +211,14 @@ class AnimeCixProvider(BaseProvider):
         return "series"
     
     def _parse_status(self, status: str) -> str:
-        """Durumu normalize et"""
         status = (status or "").lower()
         if "ongoing" in status or "devam" in status:
             return "ongoing"
         return "completed"
     
     def _parse_episode_number(self, name: str, fallback: int) -> int:
-        """Bölüm adından numara çıkar"""
         import re
         
-        # "Bölüm 5", "Episode 5", "5. Bölüm" gibi formatları yakala
         patterns = [
             r'(?:bölüm|episode|ep)\s*(\d+)',
             r'(\d+)\.\s*(?:bölüm|episode)',
