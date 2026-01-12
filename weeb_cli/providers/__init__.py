@@ -3,6 +3,7 @@ from weeb_cli.providers.registry import (
     register_provider,
     get_provider,
     get_providers_for_lang,
+    get_default_provider,
     list_providers
 )
 
@@ -15,5 +16,6 @@ __all__ = [
     "register_provider", 
     "get_provider",
     "get_providers_for_lang",
+    "get_default_provider",
     "list_providers"
 ]
