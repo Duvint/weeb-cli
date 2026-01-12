@@ -70,20 +70,29 @@ class AnimeCixProvider(BaseProvider):
         return results
     
     def get_details(self, anime_id: str) -> Optional[AnimeDetails]:
-        url = f"{ALT_URL}secure/titles/{anime_id}"
+        try:
+            safe_id = int(anime_id)
+        except (ValueError, TypeError):
+            return None
+        
+        url = f"{ALT_URL}secure/related-videos?episode=1&season=1&titleId={safe_id}&videoId=637113"
         data = _get_json(url)
         
-        if not data or "title" not in data:
-            episodes = self.get_episodes(anime_id)
+        title_data = None
+        if data and "videos" in data:
+            videos = data.get("videos") or []
+            if videos:
+                title_data = videos[0].get("title")
+        
+        episodes = self.get_episodes(anime_id)
+        
+        if not title_data:
             return AnimeDetails(
                 id=anime_id,
                 title=anime_id,
                 episodes=episodes,
                 total_episodes=len(episodes)
             )
-        
-        title_data = data["title"]
-        episodes = self.get_episodes(anime_id)
         
         return AnimeDetails(
             id=anime_id,
@@ -100,9 +109,12 @@ class AnimeCixProvider(BaseProvider):
         try:
             safe_id = int(anime_id)
         except (ValueError, TypeError):
-            safe_id = hash(str(anime_id)) % 1000000 if anime_id else 0
+            return []
         
         seasons = self._get_seasons(safe_id)
+        if not seasons:
+            seasons = [0]
+        
         episodes = []
         seen = set()
         
@@ -182,7 +194,12 @@ class AnimeCixProvider(BaseProvider):
             return []
     
     def _get_seasons(self, title_id: int) -> List[int]:
-        url = f"{ALT_URL}secure/related-videos?episode=1&season=1&titleId={title_id}&videoId=637113"
+        try:
+            safe_id = int(title_id)
+        except (ValueError, TypeError):
+            return [0]
+        
+        url = f"{ALT_URL}secure/related-videos?episode=1&season=1&titleId={safe_id}&videoId=637113"
         data = _get_json(url)
         
         if not data or "videos" not in data:
