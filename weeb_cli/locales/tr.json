@@ -3,17 +3,15 @@
         "available": "Yeni Sürüm Mevcut!",
         "current": "Mevcut Sürüm",
         "prompt": "Şimdi güncellemek ister misiniz?",
-        "opening": "İndirme sayfası tarayıcıda açılıyor...",
+        "opening": "İndirme sayfası açılıyor...",
         "error": "Güncelleme başarısız",
-        "downloading": "Güncelleme indiriliyor",
-        "downloaded": "İndirme tamamlandı!",
-        "restarting": "Uygulama yeniden başlatılıyor",
-        "updating_pip": "pip ile güncelleniyor",
         "success": "Güncelleme başarılı!",
         "restart_required": "Değişikliklerin uygulanması için uygulamayı yeniden başlatın.",
-        "no_asset": "Bu platform için indirme dosyası bulunamadı.",
-        "download_url": "İndirme bağlantısı",
-        "manual_update": "Manuel güncelleme gerekli"
+        "manual_required": "Otomatik güncelleme yapılamadı, indirme sayfası açılıyor...",
+        "detected": "Kurulum yöntemi tespit edildi",
+        "running": "Çalıştırılıyor",
+        "timeout": "İşlem zaman aşımına uğradı.",
+        "fallback": "Güncelleme başarısız, indirme sayfası açılıyor..."
     },
     "menu": {
         "title": "Ana Menü",

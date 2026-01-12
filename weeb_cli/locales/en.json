@@ -3,17 +3,15 @@
         "available": "New Update Available!",
         "current": "Current Version",
         "prompt": "Would you like to update now?",
-        "opening": "Opening download page in browser...",
+        "opening": "Opening download page...",
         "error": "Update failed",
-        "downloading": "Downloading update",
-        "downloaded": "Download complete!",
-        "restarting": "Restarting application",
-        "updating_pip": "Updating via pip",
         "success": "Update successful!",
         "restart_required": "Please restart the application to apply changes.",
-        "no_asset": "No download file found for this platform.",
-        "download_url": "Download URL",
-        "manual_update": "Manual update required"
+        "manual_required": "Auto-update not available, opening download page...",
+        "detected": "Install method detected",
+        "running": "Running",
+        "timeout": "Operation timed out.",
+        "fallback": "Update failed, opening download page..."
     },
     "menu": {
         "title": "Main Menu",
