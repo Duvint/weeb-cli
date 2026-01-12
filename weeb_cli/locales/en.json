@@ -106,6 +106,7 @@
         },
         "player_starting": "Starting Player...",
         "stream_not_found": "No stream URL found.",
+        "select_source": "Select Source:",
         "invalid_ep_id": "Invalid Episode ID.",
         "download_wip": "Download feature coming soon...",
         "queueing": "Queueing {count} episodes... (Coming Soon)"

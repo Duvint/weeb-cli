@@ -220,32 +220,54 @@ def handle_watch_flow(slug, details):
 
             with console.status(i18n.get("common.processing"), spinner="dots"):
                 stream_resp = get_streams(slug, ep_id)
-            stream_url = None
+            
+            streams_list = []
             if stream_resp and isinstance(stream_resp, dict):
-                 data_node = stream_resp
-                 for _ in range(3):
-                     if "data" in data_node and isinstance(data_node["data"], (dict, list)):
-                         data_node = data_node["data"]
-                     else:
-                         break
-                 
-                 sources = None
-                 if isinstance(data_node, list):
-                     sources = data_node
-                 elif isinstance(data_node, dict):
-                     sources = data_node.get("links") or data_node.get("sources")
-                 
-                 if sources and isinstance(sources, list):
-                     first = sources[0]
-                     if isinstance(first, dict):
-                        stream_url = first.get("url")
-                 elif isinstance(data_node, dict) and "url" in data_node:
-                     stream_url = data_node["url"]
+                data_node = stream_resp
+                for _ in range(3):
+                    if "data" in data_node and isinstance(data_node["data"], (dict, list)):
+                        data_node = data_node["data"]
+                    else:
+                        break
+                
+                sources = None
+                if isinstance(data_node, list):
+                    sources = data_node
+                elif isinstance(data_node, dict):
+                    sources = data_node.get("links") or data_node.get("sources")
+                
+                if sources and isinstance(sources, list):
+                    streams_list = sources
+            
+            if not streams_list:
+                console.print(f"[red]{i18n.get('details.stream_not_found')}[/red]")
+                time.sleep(1.5)
+                continue
+            
+            stream_choices = []
+            for idx, s in enumerate(streams_list):
+                server = s.get("server", "Unknown")
+                quality = s.get("quality", "auto")
+                label = f"{server} ({quality})"
+                stream_choices.append(questionary.Choice(label, value=s))
+            
+            if len(streams_list) == 1:
+                selected_stream = streams_list[0]
+            else:
+                selected_stream = questionary.select(
+                    i18n.get("details.select_source", "Kaynak seç:"),
+                    choices=stream_choices,
+                    pointer=">",
+                    use_shortcuts=False
+                ).ask()
+                
+                if selected_stream is None:
+                    continue
+            
+            stream_url = selected_stream.get("url")
             
             if not stream_url:
                 console.print(f"[red]{i18n.get('details.stream_not_found')}[/red]")
-                if stream_resp:
-                    console.print(f"[dim]Debug: {stream_resp}[/dim]")
                 time.sleep(1.5)
                 continue
             

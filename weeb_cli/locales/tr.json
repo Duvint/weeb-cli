@@ -106,6 +106,7 @@
         },
         "player_starting": "Oynatıcı Başlatılıyor...",
         "stream_not_found": "Yayın URL'si bulunamadı.",
+        "select_source": "Kaynak Seçin:",
         "invalid_ep_id": "Geçersiz Bölüm ID.",
         "download_wip": "İndirme özelliği yakında...",
         "queueing": "{count} bölüm sıraya alınıyor... (Yakında)"
