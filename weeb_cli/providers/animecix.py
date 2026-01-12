@@ -75,16 +75,41 @@ class AnimeCixProvider(BaseProvider):
         except (ValueError, TypeError):
             return None
         
-        url = f"{ALT_URL}secure/related-videos?episode=1&season=1&titleId={safe_id}&videoId=637113"
-        data = _get_json(url)
-        
         title_data = None
-        if data and "videos" in data:
-            videos = data.get("videos") or []
-            if videos:
-                title_data = videos[0].get("title")
+        is_movie = False
+        movie_url = None
         
-        episodes = self.get_episodes(anime_id)
+        titles_url = f"{ALT_URL}secure/titles/{safe_id}"
+        titles_data = _get_json(titles_url)
+        
+        if titles_data and "title" in titles_data:
+            title_data = titles_data["title"]
+            title_type = (title_data.get("title_type") or "").lower()
+            is_movie = "movie" in title_type or "film" in title_type
+            
+            if is_movie:
+                videos = title_data.get("videos") or []
+                if videos:
+                    movie_url = videos[0].get("url")
+        
+        if not title_data:
+            url = f"{ALT_URL}secure/related-videos?episode=1&season=1&titleId={safe_id}&videoId=637113"
+            data = _get_json(url)
+            
+            if data and "videos" in data:
+                videos = data.get("videos") or []
+                if videos:
+                    title_data = videos[0].get("title")
+        
+        if is_movie and movie_url:
+            episodes = [Episode(
+                id=movie_url,
+                number=1,
+                title=title_data.get("name", "Film"),
+                url=movie_url
+            )]
+        else:
+            episodes = self.get_episodes(anime_id)
         
         if not title_data:
             return AnimeDetails(
