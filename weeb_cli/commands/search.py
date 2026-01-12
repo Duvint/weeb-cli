@@ -289,7 +289,6 @@ def handle_watch_flow(slug, details):
                 time.sleep(1.5)
                 continue
             
-            console.print(f"[dim]Stream: {stream_url[:80]}...[/dim]")
             console.print(f"[green]{i18n.get('details.player_starting')}[/green]")
             title = f"{details.get('title', 'Anime')} - Ep {ep_num}"
             
