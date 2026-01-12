@@ -145,49 +145,37 @@ def show_anime_details(anime):
             time.sleep(1)
             return
         
+        from weeb_cli.config import config
         desc = details.get("description") or details.get("synopsis") or details.get("desc")
+        show_desc = config.get("show_description", True)
 
         opt_watch = i18n.get("details.watch")
         opt_dl = i18n.get("details.download")
-        opt_desc = i18n.get("details.show_description") if desc else None
         
-        choices = [opt_watch, opt_dl]
-        if opt_desc:
-            choices.append(opt_desc)
+        console.clear()
+        show_header(details.get("title", ""))
         
-        show_desc = False
+        if show_desc and desc:
+            console.print(f"\n[dim]{desc}[/dim]\n", justify="left")
         
-        while True:
-            console.clear()
-            show_header(details.get("title", ""))
+        try:
+            action = questionary.select(
+                i18n.get("details.action_prompt"),
+                choices=[opt_watch, opt_dl],
+                pointer=">",
+                use_shortcuts=False
+            ).ask()
             
-            if show_desc and desc:
-                console.print(f"\n[dim]{desc}[/dim]\n", justify="left")
-            
-            try:
-                action = questionary.select(
-                    i18n.get("details.action_prompt"),
-                    choices=choices,
-                    pointer=">",
-                    use_shortcuts=False
-                ).ask()
-                
-                if action is None:
-                    return
-                
-                if action == opt_desc:
-                    show_desc = not show_desc
-                    continue
-                
-                if action == opt_dl:
-                    handle_download_flow(slug, details)
-                    return
-                elif action == opt_watch:
-                    handle_watch_flow(slug, details)
-                    return
-                    
-            except KeyboardInterrupt:
+            if action is None:
                 return
+            
+            if action == opt_dl:
+                handle_download_flow(slug, details)
+            elif action == opt_watch:
+                handle_watch_flow(slug, details)
+                
+        except KeyboardInterrupt:
+            return
 
 def get_episodes_safe(details):
     episodes = None

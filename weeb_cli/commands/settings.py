@@ -44,17 +44,19 @@ def open_settings():
 
         aria2_state = i18n.get("common.enabled") if config.get("aria2_enabled") else i18n.get("common.disabled")
         ytdlp_state = i18n.get("common.enabled") if config.get("ytdlp_enabled") else i18n.get("common.disabled")
+        desc_state = i18n.get("common.enabled") if config.get("show_description", True) else i18n.get("common.disabled")
         
         opt_lang = i18n.get("settings.language")
         opt_source = f"{i18n.get('settings.source')} [{display_source}]"
         opt_download = i18n.get("settings.download_settings")
+        opt_desc = f"{i18n.get('settings.show_description')} [{desc_state}]"
         opt_aria2 = f"{i18n.get('settings.aria2')} [{aria2_state}]"
         opt_ytdlp = f"{i18n.get('settings.ytdlp')} [{ytdlp_state}]"
         
         opt_aria2_conf = f"  ↳ {i18n.get('settings.aria2_config')}"
         opt_ytdlp_conf = f"  ↳ {i18n.get('settings.ytdlp_config')}"
         
-        choices = [opt_lang, opt_source, opt_download, opt_aria2]
+        choices = [opt_lang, opt_source, opt_download, opt_desc, opt_aria2]
         if config.get("aria2_enabled"):
             choices.append(opt_aria2_conf)
             
@@ -83,6 +85,8 @@ def open_settings():
             change_source()
         elif answer == opt_download:
             download_settings_menu()
+        elif answer == opt_desc:
+            toggle_description()
         elif answer == opt_aria2:
             toggle_config("aria2_enabled", "Aria2")
         elif answer == opt_aria2_conf:
@@ -93,6 +97,13 @@ def open_settings():
             ytdlp_settings_menu()
         elif answer is None:
             return
+
+def toggle_description():
+    current = config.get("show_description", True)
+    config.set("show_description", not current)
+    msg_key = "settings.toggle_on" if not current else "settings.toggle_off"
+    console.print(f"[green]{i18n.t(msg_key, tool=i18n.get('settings.show_description'))}[/green]")
+    time.sleep(0.5)
 
 def change_language():
     from weeb_cli.services.scraper import scraper

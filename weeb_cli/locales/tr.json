@@ -30,6 +30,7 @@
         "source": "Kaynak Seçimi",
         "aria2": "Aria2 İndirici",
         "ytdlp": "yt-dlp Desteği",
+        "show_description": "Açıklama Göster",
         "aria2_config": "Aria2 Ayarları",
         "ytdlp_config": "yt-dlp Ayarları",
         "max_conn": "Maksimum Bağlantı",
@@ -107,7 +108,6 @@
         "player_starting": "Oynatıcı Başlatılıyor...",
         "stream_not_found": "Yayın URL'si bulunamadı.",
         "select_source": "Kaynak Seçin:",
-        "show_description": "📖 Açıklamayı Göster/Gizle",
         "invalid_ep_id": "Geçersiz Bölüm ID.",
         "download_wip": "İndirme özelliği yakında...",
         "queueing": "{count} bölüm sıraya alınıyor... (Yakında)"
