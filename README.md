@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="weeb_landing/logo/weeb-logo.png" alt="Weeb CLI Logo" width="120">
+  <img src="weeb_landing/logo/512x512.webp" alt="Weeb CLI Logo" width="120">
 </p>
 
 <h1 align="center">Weeb CLI</h1>
