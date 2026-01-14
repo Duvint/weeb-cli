@@ -84,69 +84,79 @@ def show_downloads():
         except KeyboardInterrupt:
             return
 
-def show_completed_library(library, source_name=None):
-    search_query = ""
+def fuzzy_match(query: str, text: str) -> float:
+    from difflib import SequenceMatcher
+    query = query.lower()
+    text = text.lower()
     
+    if query == text:
+        return 1.0
+    if query in text:
+        return 0.9
+    
+    return SequenceMatcher(None, query, text).ratio()
+
+def show_completed_library(library, source_name=None):
     while True:
         console.clear()
         title = source_name or i18n.get("downloads.completed_downloads")
         show_header(title)
         
-        filtered = library
-        if search_query:
-            filtered = [a for a in library if search_query.lower() in a["title"].lower()]
-            console.print(f"[dim]{i18n.get('search.results')}: {len(filtered)}/{len(library)}[/dim]\n")
-        
-        if not filtered:
-            console.print(f"[dim]{i18n.get('search.no_results')}[/dim]")
-            search_query = ""
-            time.sleep(1)
-            continue
-        
-        choices = []
-        
-        opt_search = f"[{i18n.get('downloads.search_library')}]"
-        choices.append(questionary.Choice(opt_search, value="search"))
-        
-        for anime in filtered:
+        anime_map = {}
+        for anime in library:
             progress = local_library.get_anime_progress(anime["title"])
             watched = len(progress.get("completed", []))
             total = anime["episode_count"]
             
             if watched >= total and total > 0:
-                status = "[green]✓[/green]"
+                status = " [✓]"
             elif watched > 0:
-                status = f"[cyan]{watched}/{total}[/cyan]"
+                status = f" [{watched}/{total}]"
             else:
                 status = ""
             
-            label = f"{anime['title']} [{total} {i18n.get('details.episode')}]"
-            if status:
-                label += f" {status}"
+            label = f"{anime['title']} [{total} Ep]{status}"
+            anime_map[label] = anime
+        
+        all_choices = list(anime_map.keys())
+        
+        def get_suggestions(text):
+            if not text:
+                return all_choices[:20]
             
-            choices.append(questionary.Choice(label, value=anime))
+            scored = []
+            for choice in all_choices:
+                score = fuzzy_match(text, choice)
+                if score > 0.3:
+                    scored.append((score, choice))
+            
+            scored.sort(key=lambda x: x[0], reverse=True)
+            return [c for _, c in scored[:20]]
         
         try:
-            selected = questionary.select(
-                i18n.get("downloads.select_anime"),
-                choices=choices,
-                pointer=">",
-                use_shortcuts=False
+            selected_label = questionary.autocomplete(
+                i18n.get("downloads.search_anime"),
+                choices=all_choices,
+                meta_information=get_suggestions,
+                match_middle=True,
+                style=questionary.Style([
+                    ('answer', 'fg:cyan bold'),
+                    ('highlighted', 'fg:cyan'),
+                ])
             ).ask()
             
-            if selected is None:
+            if selected_label is None:
                 return
             
-            if selected == "search":
-                q = questionary.text(
-                    i18n.get("search.prompt") + ":",
-                    qmark=">"
-                ).ask()
-                if q:
-                    search_query = q.strip()
-                continue
-            
-            show_anime_episodes(selected)
+            if selected_label in anime_map:
+                show_anime_episodes(anime_map[selected_label])
+            elif selected_label.strip():
+                matches = [a for a in library if selected_label.lower() in a["title"].lower()]
+                if matches:
+                    show_anime_episodes(matches[0])
+                else:
+                    console.print(f"[dim]{i18n.get('search.no_results')}[/dim]")
+                    time.sleep(1)
             
         except KeyboardInterrupt:
             return
