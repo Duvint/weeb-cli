@@ -1,7 +1,7 @@
 import json
 import re
 import urllib.request
-from urllib.parse import quote, urlencode
+from urllib.parse import quote
 from typing import List, Optional
 from bs4 import BeautifulSoup
 
@@ -13,6 +13,7 @@ from weeb_cli.providers.base import (
     StreamLink
 )
 from weeb_cli.providers.registry import register_provider
+from weeb_cli.providers.extractors.megacloud import extract_stream
 
 BASE_URL = "https://hianime.to"
 AJAX_URL = f"{BASE_URL}/ajax/v2"
@@ -30,19 +31,19 @@ def _http_get(url: str, headers: dict = None, timeout: int = 15) -> bytes:
         return resp.read()
 
 
-def _get_json(url: str, headers: dict = None, timeout: int = 15):
+def _get_json(url: str, headers: dict = None) -> Optional[dict]:
     try:
-        data = _http_get(url, headers, timeout)
+        data = _http_get(url, headers)
         return json.loads(data)
-    except Exception:
+    except:
         return None
 
 
-def _get_html(url: str, headers: dict = None, timeout: int = 15) -> str:
+def _get_html(url: str, headers: dict = None) -> str:
     try:
-        data = _http_get(url, headers, timeout)
+        data = _http_get(url, headers)
         return data.decode('utf-8')
-    except Exception:
+    except:
         return ""
 
 
@@ -74,6 +75,7 @@ class HiAnimeProvider(BaseProvider):
                     continue
                 
                 title = title_el.get_text(strip=True)
+                alt_title = title_el.get('data-jname', '')
                 href = title_el.get('href', '')
                 anime_id = href.split('/')[-1].split('?')[0] if href else None
                 
@@ -83,8 +85,18 @@ class HiAnimeProvider(BaseProvider):
                 poster = item.select_one('.film-poster-img')
                 cover = poster.get('data-src') if poster else None
                 
+                sub_el = item.select_one('.tick-sub')
+                dub_el = item.select_one('.tick-dub')
+                eps_el = item.select_one('.tick-eps')
+                
+                sub_count = sub_el.get_text(strip=True) if sub_el else "0"
+                dub_count = dub_el.get_text(strip=True) if dub_el else "0"
+                
                 type_el = item.select_one('.fdi-item')
-                anime_type = type_el.get_text(strip=True).lower() if type_el else "series"
+                anime_type = type_el.get_text(strip=True).lower() if type_el else "tv"
+                
+                duration_el = item.select_one('.fdi-duration')
+                duration = duration_el.get_text(strip=True) if duration_el else ""
                 
                 results.append(AnimeResult(
                     id=anime_id,
@@ -92,7 +104,7 @@ class HiAnimeProvider(BaseProvider):
                     type=self._parse_type(anime_type),
                     cover=cover
                 ))
-            except Exception:
+            except:
                 continue
         
         return results
@@ -108,6 +120,9 @@ class HiAnimeProvider(BaseProvider):
         
         title_el = soup.select_one('.anisc-detail .film-name')
         title = title_el.get_text(strip=True) if title_el else anime_id
+        
+        alt_title_el = soup.select_one('.film-name[data-jname]')
+        alt_title = alt_title_el.get('data-jname') if alt_title_el else None
         
         desc_el = soup.select_one('.film-description .text')
         description = desc_el.get_text(strip=True) if desc_el else None
@@ -155,6 +170,10 @@ class HiAnimeProvider(BaseProvider):
                     continue
                 
                 title = item.get('title', '')
+                alt_title = item.select_one('.ep-name.e-dynamic-name')
+                alt_title = alt_title.get('data-jname') if alt_title else None
+                
+                is_filler = 'ssl-item-filler' in item.get('class', [])
                 ep_num = i + 1
                 
                 episodes.append(Episode(
@@ -162,7 +181,7 @@ class HiAnimeProvider(BaseProvider):
                     number=ep_num,
                     title=title
                 ))
-            except Exception:
+            except:
                 continue
         
         return episodes
@@ -177,32 +196,90 @@ class HiAnimeProvider(BaseProvider):
             return []
         
         soup = BeautifulSoup(servers_data['html'], 'html.parser')
-        streams = []
         
-        for server_item in soup.select('.server-item'):
+        servers = {"sub": [], "dub": []}
+        
+        for server_item in soup.select('.servers-sub .server-item'):
             try:
                 server_id = server_item.get('data-id')
-                server_type = server_item.get('data-type', 'sub')
+                server_index = server_item.get('data-server-id')
                 server_name = server_item.select_one('a')
                 server_name = server_name.get_text(strip=True).lower() if server_name else 'unknown'
                 
-                if not server_id:
-                    continue
-                
-                sources_url = f"{AJAX_URL}/episode/sources?id={server_id}"
-                sources_data = _get_json(sources_url, self.headers)
-                
-                if sources_data and 'link' in sources_data:
-                    streams.append(StreamLink(
-                        url=sources_data['link'],
-                        quality="auto",
-                        server=f"{server_name}-{server_type}",
-                        headers={"Referer": BASE_URL}
-                    ))
-            except Exception:
+                if server_id:
+                    servers["sub"].append({
+                        "id": int(server_id),
+                        "index": int(server_index) if server_index else None,
+                        "name": server_name,
+                        "type": "sub"
+                    })
+            except:
                 continue
         
+        for server_item in soup.select('.servers-dub .server-item'):
+            try:
+                server_id = server_item.get('data-id')
+                server_index = server_item.get('data-server-id')
+                server_name = server_item.select_one('a')
+                server_name = server_name.get_text(strip=True).lower() if server_name else 'unknown'
+                
+                if server_id:
+                    servers["dub"].append({
+                        "id": int(server_id),
+                        "index": int(server_index) if server_index else None,
+                        "name": server_name,
+                        "type": "dub"
+                    })
+            except:
+                continue
+        
+        streams = []
+        
+        for server_type in ["sub", "dub"]:
+            for server in servers[server_type]:
+                try:
+                    stream_data = extract_stream(
+                        server_id=server["id"],
+                        episode_id=episode_id,
+                        server_type=server_type,
+                        server_name=server["name"]
+                    )
+                    
+                    if stream_data and stream_data.get("file"):
+                        streams.append(StreamLink(
+                            url=stream_data["file"],
+                            quality="auto",
+                            server=f"{server['name']}-{server_type}",
+                            headers={"Referer": "https://megacloud.tv"},
+                            subtitles=self._get_subtitle_url(stream_data.get("tracks", []))
+                        ))
+                except:
+                    continue
+        
+        if not streams:
+            for server_type in ["sub", "dub"]:
+                for server in servers[server_type]:
+                    streams.append(StreamLink(
+                        url=f"embedded:{server['id']}:{episode_id}:{server_type}:{server['name']}",
+                        quality="auto",
+                        server=f"{server['name']}-{server_type} (embedded)",
+                        headers={"Referer": BASE_URL}
+                    ))
+        
         return streams
+    
+    def _get_subtitle_url(self, tracks: List[dict]) -> Optional[str]:
+        for track in tracks:
+            if track.get('kind') in ['captions', 'subtitles']:
+                label = track.get('label', '').lower()
+                if 'english' in label:
+                    return track.get('file')
+        
+        for track in tracks:
+            if track.get('kind') in ['captions', 'subtitles']:
+                return track.get('file')
+        
+        return None
     
     def _parse_type(self, type_str: str) -> str:
         type_str = (type_str or "").lower()
