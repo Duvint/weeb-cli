@@ -163,5 +163,48 @@ class LocalLibrary:
     
     def get_external_drives(self):
         return self.db.get_external_drives()
+    
+    def index_source(self, source_path: str, source_name: str):
+        path = Path(source_path)
+        if not path.exists():
+            return 0
+        
+        self.db.clear_source_index(source_path)
+        
+        count = 0
+        for anime_folder in path.iterdir():
+            if not anime_folder.is_dir():
+                continue
+            
+            episodes = self._scan_anime_folder(anime_folder)
+            if episodes:
+                self.db.index_anime(
+                    title=anime_folder.name,
+                    source_path=source_path,
+                    source_name=source_name,
+                    folder_path=str(anime_folder),
+                    episode_count=len(episodes)
+                )
+                count += 1
+        
+        return count
+    
+    def index_all_sources(self):
+        total = 0
+        for source in self.get_all_sources():
+            if source["available"]:
+                total += self.index_source(source["path"], source["name"])
+        return total
+    
+    def get_indexed_anime(self) -> List[Dict]:
+        return self.db.get_all_indexed_anime()
+    
+    def search_all_indexed(self, query: str) -> List[Dict]:
+        if not query:
+            return self.db.get_all_indexed_anime()
+        return self.db.search_indexed_anime(query)
+    
+    def is_source_available(self, source_path: str) -> bool:
+        return Path(source_path).exists()
 
 local_library = LocalLibrary()

@@ -1,4 +1,5 @@
 import questionary
+from pathlib import Path
 from rich.console import Console
 from rich.live import Live
 from rich.table import Table
@@ -22,6 +23,12 @@ def show_downloads():
         
         choices = []
         
+        indexed_count = len(local_library.get_indexed_anime())
+        choices.append(questionary.Choice(
+            f"⌕ {i18n.get('downloads.search_all')} ({indexed_count} anime)",
+            value={"type": "search_all"}
+        ))
+        
         for source in sources:
             if source["available"]:
                 library = local_library.scan_library(source["path"])
@@ -32,9 +39,11 @@ def show_downloads():
                         value={"type": "source", "data": source}
                     ))
             else:
+                indexed = [a for a in local_library.get_indexed_anime() if a["source_path"] == source["path"]]
+                count = len(indexed)
                 choices.append(questionary.Choice(
-                    f"○ {source['name']} - {i18n.get('downloads.drive_not_connected')}",
-                    value={"type": "unavailable", "data": source}
+                    f"○ {source['name']} ({count} anime) - {i18n.get('downloads.offline')}",
+                    value={"type": "offline", "data": source}
                 ))
         
         if active_queue:
@@ -51,13 +60,10 @@ def show_downloads():
                 value={"type": "manage"}
             ))
         
-        if not choices:
-            console.print(f"[dim]{i18n.get('downloads.empty')}[/dim]")
-            try:
-                input(i18n.get("common.continue_key"))
-            except KeyboardInterrupt:
-                pass
-            return
+        choices.append(questionary.Choice(
+            f"↻ {i18n.get('downloads.reindex')}",
+            value={"type": "reindex"}
+        ))
         
         try:
             action = questionary.select(
@@ -70,16 +76,23 @@ def show_downloads():
             if action is None:
                 return
             
-            if action["type"] == "source":
+            if action["type"] == "search_all":
+                search_all_sources()
+            elif action["type"] == "source":
+                local_library.index_source(action["data"]["path"], action["data"]["name"])
                 library = local_library.scan_library(action["data"]["path"])
                 show_completed_library(library, action["data"]["name"])
-            elif action["type"] == "unavailable":
-                console.print(f"[yellow]{i18n.t('downloads.connect_drive', name=action['data']['name'])}[/yellow]")
-                time.sleep(1.5)
+            elif action["type"] == "offline":
+                show_offline_library(action["data"])
             elif action["type"] == "active":
                 show_queue_live()
             elif action["type"] == "manage":
                 manage_queue()
+            elif action["type"] == "reindex":
+                with console.status(i18n.get("downloads.indexing"), spinner="dots"):
+                    count = local_library.index_all_sources()
+                console.print(f"[green]{i18n.t('downloads.indexed', count=count)}[/green]")
+                time.sleep(1)
                 
         except KeyboardInterrupt:
             return
@@ -95,6 +108,141 @@ def fuzzy_match(query: str, text: str) -> float:
         return 0.9
     
     return SequenceMatcher(None, query, text).ratio()
+
+def search_all_sources():
+    while True:
+        console.clear()
+        show_header(i18n.get("downloads.search_all"))
+        
+        all_indexed = local_library.get_indexed_anime()
+        
+        anime_map = {}
+        for anime in all_indexed:
+            progress = local_library.get_anime_progress(anime["title"])
+            watched = len(progress.get("completed", []))
+            total = anime["episode_count"]
+            available = local_library.is_source_available(anime["source_path"])
+            
+            status_icon = "●" if available else "○"
+            
+            if watched >= total and total > 0:
+                watch_status = " [✓]"
+            elif watched > 0:
+                watch_status = f" [{watched}/{total}]"
+            else:
+                watch_status = ""
+            
+            label = f"{status_icon} {anime['title']} [{anime['source_name']}]{watch_status}"
+            anime_map[label] = anime
+        
+        all_choices = list(anime_map.keys())
+        
+        if not all_choices:
+            console.print(f"[dim]{i18n.get('downloads.no_indexed')}[/dim]")
+            time.sleep(1.5)
+            return
+        
+        def get_suggestions(text):
+            if not text:
+                return all_choices[:20]
+            
+            scored = []
+            for choice in all_choices:
+                score = fuzzy_match(text, choice)
+                if score > 0.3:
+                    scored.append((score, choice))
+            
+            scored.sort(key=lambda x: x[0], reverse=True)
+            return [c for _, c in scored[:20]]
+        
+        try:
+            selected_label = questionary.autocomplete(
+                i18n.get("downloads.search_anime"),
+                choices=all_choices,
+                meta_information=get_suggestions,
+                match_middle=True,
+            ).ask()
+            
+            if selected_label is None:
+                return
+            
+            if selected_label in anime_map:
+                anime_info = anime_map[selected_label]
+                
+                if not local_library.is_source_available(anime_info["source_path"]):
+                    console.print(f"[yellow]{i18n.t('downloads.connect_drive', name=anime_info['source_name'])}[/yellow]")
+                    time.sleep(1.5)
+                    continue
+                
+                anime_data = {
+                    "title": anime_info["title"],
+                    "path": anime_info["folder_path"],
+                    "episode_count": anime_info["episode_count"],
+                    "episodes": local_library._scan_anime_folder(Path(anime_info["folder_path"]))
+                }
+                show_anime_episodes(anime_data)
+            
+        except KeyboardInterrupt:
+            return
+
+def show_offline_library(source):
+    while True:
+        console.clear()
+        show_header(f"{source['name']} ({i18n.get('downloads.offline')})")
+        
+        indexed = [a for a in local_library.get_indexed_anime() if a["source_path"] == source["path"]]
+        
+        if not indexed:
+            console.print(f"[dim]{i18n.get('downloads.no_indexed')}[/dim]")
+            time.sleep(1.5)
+            return
+        
+        anime_map = {}
+        for anime in indexed:
+            progress = local_library.get_anime_progress(anime["title"])
+            watched = len(progress.get("completed", []))
+            total = anime["episode_count"]
+            
+            if watched >= total and total > 0:
+                status = " [✓]"
+            elif watched > 0:
+                status = f" [{watched}/{total}]"
+            else:
+                status = ""
+            
+            label = f"{anime['title']} [{total} Ep]{status}"
+            anime_map[label] = anime
+        
+        all_choices = list(anime_map.keys())
+        
+        def get_suggestions(text):
+            if not text:
+                return all_choices[:20]
+            scored = []
+            for choice in all_choices:
+                score = fuzzy_match(text, choice)
+                if score > 0.3:
+                    scored.append((score, choice))
+            scored.sort(key=lambda x: x[0], reverse=True)
+            return [c for _, c in scored[:20]]
+        
+        try:
+            selected_label = questionary.autocomplete(
+                i18n.get("downloads.search_anime"),
+                choices=all_choices,
+                meta_information=get_suggestions,
+                match_middle=True,
+            ).ask()
+            
+            if selected_label is None:
+                return
+            
+            if selected_label in anime_map:
+                console.print(f"[yellow]{i18n.t('downloads.connect_drive', name=source['name'])}[/yellow]")
+                time.sleep(1.5)
+            
+        except KeyboardInterrupt:
+            return
 
 def show_completed_library(library, source_name=None):
     while True:

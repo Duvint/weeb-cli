@@ -67,8 +67,20 @@ class Database:
                     added_at TEXT
                 );
                 
+                CREATE TABLE IF NOT EXISTS anime_index (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    title TEXT,
+                    source_path TEXT,
+                    source_name TEXT,
+                    folder_path TEXT,
+                    episode_count INTEGER DEFAULT 0,
+                    indexed_at TEXT
+                );
+                
                 CREATE INDEX IF NOT EXISTS idx_queue_status ON download_queue(status);
                 CREATE INDEX IF NOT EXISTS idx_progress_slug ON progress(slug);
+                CREATE INDEX IF NOT EXISTS idx_anime_title ON anime_index(title);
+                CREATE INDEX IF NOT EXISTS idx_anime_source ON anime_index(source_path);
             ''')
     
     def _migrate_from_json(self):
@@ -270,3 +282,28 @@ class Database:
             conn.execute('UPDATE external_drives SET name = ? WHERE path = ?', (name, path))
 
 db = Database()
+
+    def index_anime(self, title, source_path, source_name, folder_path, episode_count):
+        with self._conn() as conn:
+            conn.execute('DELETE FROM anime_index WHERE folder_path = ?', (folder_path,))
+            conn.execute('''
+                INSERT INTO anime_index (title, source_path, source_name, folder_path, episode_count, indexed_at)
+                VALUES (?, ?, ?, ?, ?, ?)
+            ''', (title, source_path, source_name, folder_path, episode_count, datetime.now().isoformat()))
+    
+    def clear_source_index(self, source_path):
+        with self._conn() as conn:
+            conn.execute('DELETE FROM anime_index WHERE source_path = ?', (source_path,))
+    
+    def get_all_indexed_anime(self):
+        with self._conn() as conn:
+            rows = conn.execute('SELECT * FROM anime_index ORDER BY title').fetchall()
+            return [dict(row) for row in rows]
+    
+    def search_indexed_anime(self, query):
+        with self._conn() as conn:
+            rows = conn.execute(
+                'SELECT * FROM anime_index WHERE title LIKE ? ORDER BY title',
+                (f'%{query}%',)
+            ).fetchall()
+            return [dict(row) for row in rows]
