@@ -60,17 +60,34 @@
 
 ## Installation
 
-### Windows
-```powershell
-# Download .exe from Releases page
-# or via pip:
-pip install weeb-cli
-```
-
-### Linux / macOS
+### PyPI (Universal)
 ```bash
 pip install weeb-cli
 ```
+
+### Arch Linux (AUR)
+```bash
+yay -S weeb-cli
+```
+
+### Homebrew (macOS/Linux)
+```bash
+brew install ewgsta/tap/weeb-cli
+```
+
+### Chocolatey (Windows)
+```powershell
+choco install weeb-cli
+```
+
+### Scoop (Windows)
+```powershell
+scoop bucket add weeb https://github.com/ewgsta/scoop-bucket.git
+scoop install weeb-cli
+```
+
+### Portable
+Download the appropriate file for your platform from [Releases](https://github.com/ewgsta/weeb-cli/releases).
 
 ### Developer Setup
 ```bash

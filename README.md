@@ -60,17 +60,34 @@
 
 ## Kurulum
 
-### Windows
-```powershell
-# Releases sayfasından .exe dosyasını indirin
-# veya pip ile:
-pip install weeb-cli
-```
-
-### Linux / macOS
+### PyPI (Evrensel)
 ```bash
 pip install weeb-cli
 ```
+
+### Arch Linux (AUR)
+```bash
+yay -S weeb-cli
+```
+
+### Homebrew (macOS/Linux)
+```bash
+brew install ewgsta/tap/weeb-cli
+```
+
+### Chocolatey (Windows)
+```powershell
+choco install weeb-cli
+```
+
+### Scoop (Windows)
+```powershell
+scoop bucket add weeb https://github.com/ewgsta/scoop-bucket.git
+scoop install weeb-cli
+```
+
+### Portable
+[Releases](https://github.com/ewgsta/weeb-cli/releases) sayfasından platformunuza uygun dosyayı indirin.
 
 ### Geliştirici Kurulumu
 ```bash
