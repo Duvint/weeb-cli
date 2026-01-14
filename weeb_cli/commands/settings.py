@@ -273,9 +273,9 @@ def external_drives_menu():
         
         for drive in drives:
             path = Path(drive["path"])
-            status = "[green]✓[/green]" if path.exists() else "[red]✗[/red]"
+            status = "● " if path.exists() else "○ "
             choices.append(questionary.Choice(
-                f"{drive['name']} ({drive['path']}) {status}",
+                f"{status}{drive['name']} ({drive['path']})",
                 value=drive
             ))
         

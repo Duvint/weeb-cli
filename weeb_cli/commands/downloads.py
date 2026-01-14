@@ -28,12 +28,12 @@ def show_downloads():
                 count = len(library)
                 if count > 0:
                     choices.append(questionary.Choice(
-                        f"{source['name']} ({count} anime)",
+                        f"● {source['name']} ({count} anime)",
                         value={"type": "source", "data": source}
                     ))
             else:
                 choices.append(questionary.Choice(
-                    f"[red]{source['name']} - {i18n.get('downloads.drive_not_connected')}[/red]",
+                    f"○ {source['name']} - {i18n.get('downloads.drive_not_connected')}",
                     value={"type": "unavailable", "data": source}
                 ))
         
