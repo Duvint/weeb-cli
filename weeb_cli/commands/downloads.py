@@ -254,26 +254,35 @@ def show_completed_library(library, source_name=None):
         
         all_choices = list(anime_map.keys())
         
+        choices = [
+            questionary.Choice(f"⌕ {i18n.get('downloads.search_anime')}", value="search"),
+        ]
+        for label in all_choices:
+            choices.append(questionary.Choice(label, value=label))
+        
         try:
-            selected_label = questionary.autocomplete(
-                i18n.get("downloads.search_anime"),
-                choices=all_choices,
-                match_middle=True,
-                style=AUTOCOMPLETE_STYLE,
+            selected = questionary.select(
+                i18n.get("downloads.action_prompt"),
+                choices=choices,
+                pointer=">",
+                use_shortcuts=False,
             ).ask()
             
-            if selected_label is None:
+            if selected is None:
                 return
             
-            if selected_label in anime_map:
-                show_anime_episodes(anime_map[selected_label])
-            elif selected_label.strip():
-                matches = [a for a in library if selected_label.lower() in a["title"].lower()]
-                if matches:
-                    show_anime_episodes(matches[0])
-                else:
-                    console.print(f"[dim]{i18n.get('search.no_results')}[/dim]")
-                    time.sleep(1)
+            if selected == "search":
+                search_result = questionary.autocomplete(
+                    i18n.get("downloads.search_anime"),
+                    choices=all_choices,
+                    match_middle=True,
+                    style=AUTOCOMPLETE_STYLE,
+                ).ask()
+                
+                if search_result and search_result in anime_map:
+                    show_anime_episodes(anime_map[search_result])
+            elif selected in anime_map:
+                show_anime_episodes(anime_map[selected])
             
         except KeyboardInterrupt:
             return
