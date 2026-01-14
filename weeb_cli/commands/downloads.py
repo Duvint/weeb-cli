@@ -194,6 +194,7 @@ def show_offline_library(source):
             time.sleep(1.5)
             return
         
+        ep_short = i18n.get("downloads.episode_short")
         anime_map = {}
         for anime in indexed:
             progress = local_library.get_anime_progress(anime["title"])
@@ -207,7 +208,7 @@ def show_offline_library(source):
             else:
                 status = ""
             
-            label = f"{anime['title']} [{total} Ep]{status}"
+            label = f"{anime['title']} [{total} {ep_short}]{status}"
             anime_map[label] = anime
         
         all_choices = list(anime_map.keys())
@@ -236,6 +237,7 @@ def show_completed_library(library, source_name=None):
         title = source_name or i18n.get("downloads.completed_downloads")
         show_header(title)
         
+        ep_short = i18n.get("downloads.episode_short")
         anime_map = {}
         for anime in library:
             progress = local_library.get_anime_progress(anime["title"])
@@ -249,7 +251,7 @@ def show_completed_library(library, source_name=None):
             else:
                 status = ""
             
-            label = f"{anime['title']} [{total} Ep]{status}"
+            label = f"{anime['title']} [{total} {ep_short}]{status}"
             anime_map[label] = anime
         
         all_choices = list(anime_map.keys())

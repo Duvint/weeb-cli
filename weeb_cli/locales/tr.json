@@ -190,6 +190,7 @@
         "drive_not_connected": "Disk bağlı değil",
         "connect_drive": "{name} diskini bağlayın",
         "notification_title": "Weeb CLI",
-        "notification_complete": "{anime} - {episode}. bölüm indirildi"
+        "notification_complete": "{anime} - {episode}. bölüm indirildi",
+        "episode_short": "Blm"
     }
 }

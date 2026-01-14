@@ -190,6 +190,7 @@
         "drive_not_connected": "Drive not connected",
         "connect_drive": "Connect {name} drive",
         "notification_title": "Weeb CLI",
-        "notification_complete": "{anime} - Episode {episode} downloaded"
+        "notification_complete": "{anime} - Episode {episode} downloaded",
+        "episode_short": "Ep"
     }
 }
