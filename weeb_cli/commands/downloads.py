@@ -143,23 +143,10 @@ def search_all_sources():
             time.sleep(1.5)
             return
         
-        def get_suggestions(text):
-            if not text:
-                return all_choices[:20]
-            
-            scored = []
-            for choice in all_choices:
-                score = fuzzy_match(text, choice)
-                if score > 0.3:
-                    scored.append((score, choice))
-            
-            scored.sort(key=lambda x: x[0], reverse=True)
-            return [c for _, c in scored[:20]]
-        
         try:
             selected_label = questionary.autocomplete(
                 i18n.get("downloads.search_anime"),
-                choices=get_suggestions,
+                choices=all_choices,
                 match_middle=True,
             ).ask()
             
@@ -215,21 +202,10 @@ def show_offline_library(source):
         
         all_choices = list(anime_map.keys())
         
-        def get_suggestions(text):
-            if not text:
-                return all_choices[:20]
-            scored = []
-            for choice in all_choices:
-                score = fuzzy_match(text, choice)
-                if score > 0.3:
-                    scored.append((score, choice))
-            scored.sort(key=lambda x: x[0], reverse=True)
-            return [c for _, c in scored[:20]]
-        
         try:
             selected_label = questionary.autocomplete(
                 i18n.get("downloads.search_anime"),
-                choices=get_suggestions,
+                choices=all_choices,
                 match_middle=True,
             ).ask()
             
@@ -267,23 +243,10 @@ def show_completed_library(library, source_name=None):
         
         all_choices = list(anime_map.keys())
         
-        def get_suggestions(text):
-            if not text:
-                return all_choices[:20]
-            
-            scored = []
-            for choice in all_choices:
-                score = fuzzy_match(text, choice)
-                if score > 0.3:
-                    scored.append((score, choice))
-            
-            scored.sort(key=lambda x: x[0], reverse=True)
-            return [c for _, c in scored[:20]]
-        
         try:
             selected_label = questionary.autocomplete(
                 i18n.get("downloads.search_anime"),
-                choices=get_suggestions,
+                choices=all_choices,
                 match_middle=True,
                 style=questionary.Style([
                     ('answer', 'fg:cyan bold'),
