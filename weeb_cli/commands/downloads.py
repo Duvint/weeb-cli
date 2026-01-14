@@ -13,6 +13,16 @@ import time
 
 console = Console()
 
+AUTOCOMPLETE_STYLE = questionary.Style([
+    ('qmark', 'fg:white'),
+    ('question', 'fg:white bold'),
+    ('answer', 'fg:white bold'),
+    ('pointer', 'fg:cyan bold'),
+    ('highlighted', 'fg:black bg:white'),
+    ('selected', 'fg:white'),
+    ('text', 'fg:white'),
+])
+
 def show_downloads():
     local_library.smart_index_all()
     
@@ -148,6 +158,7 @@ def search_all_sources():
                 i18n.get("downloads.search_anime"),
                 choices=all_choices,
                 match_middle=True,
+                style=AUTOCOMPLETE_STYLE,
             ).ask()
             
             if selected_label is None:
@@ -207,6 +218,7 @@ def show_offline_library(source):
                 i18n.get("downloads.search_anime"),
                 choices=all_choices,
                 match_middle=True,
+                style=AUTOCOMPLETE_STYLE,
             ).ask()
             
             if selected_label is None:
@@ -248,10 +260,7 @@ def show_completed_library(library, source_name=None):
                 i18n.get("downloads.search_anime"),
                 choices=all_choices,
                 match_middle=True,
-                style=questionary.Style([
-                    ('answer', 'fg:cyan bold'),
-                    ('highlighted', 'fg:cyan'),
-                ])
+                style=AUTOCOMPLETE_STYLE,
             ).ask()
             
             if selected_label is None:
