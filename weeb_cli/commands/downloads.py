@@ -17,31 +17,39 @@ def show_downloads():
         console.clear()
         show_header(i18n.get("downloads.title"))
         
-        library = local_library.scan_library()
+        sources = local_library.get_all_sources()
         active_queue = [i for i in queue_manager.queue if i["status"] in ["pending", "processing"]]
-        
-        opt_completed = i18n.get("downloads.completed_downloads")
-        opt_active = i18n.get("downloads.active_downloads")
-        opt_manage = i18n.get("downloads.manage_queue")
         
         choices = []
         
-        if library:
-            choices.append(questionary.Choice(
-                f"{opt_completed} ({len(library)} anime)",
-                value="completed"
-            ))
+        for source in sources:
+            if source["available"]:
+                library = local_library.scan_library(source["path"])
+                count = len(library)
+                if count > 0:
+                    choices.append(questionary.Choice(
+                        f"{source['name']} ({count} anime)",
+                        value={"type": "source", "data": source}
+                    ))
+            else:
+                choices.append(questionary.Choice(
+                    f"[red]{source['name']} - {i18n.get('downloads.drive_not_connected')}[/red]",
+                    value={"type": "unavailable", "data": source}
+                ))
         
         if active_queue:
             is_running = queue_manager.is_running()
             status = i18n.get("downloads.queue_running") if is_running else i18n.get("downloads.queue_stopped")
             choices.append(questionary.Choice(
-                f"{opt_active} ({len(active_queue)}) - {status}",
-                value="active"
+                f"{i18n.get('downloads.active_downloads')} ({len(active_queue)}) - {status}",
+                value={"type": "active"}
             ))
         
         if queue_manager.queue:
-            choices.append(questionary.Choice(opt_manage, value="manage"))
+            choices.append(questionary.Choice(
+                i18n.get("downloads.manage_queue"),
+                value={"type": "manage"}
+            ))
         
         if not choices:
             console.print(f"[dim]{i18n.get('downloads.empty')}[/dim]")
@@ -62,22 +70,27 @@ def show_downloads():
             if action is None:
                 return
             
-            if action == "completed":
-                show_completed_library(library)
-            elif action == "active":
+            if action["type"] == "source":
+                library = local_library.scan_library(action["data"]["path"])
+                show_completed_library(library, action["data"]["name"])
+            elif action["type"] == "unavailable":
+                console.print(f"[yellow]{i18n.t('downloads.connect_drive', name=action['data']['name'])}[/yellow]")
+                time.sleep(1.5)
+            elif action["type"] == "active":
                 show_queue_live()
-            elif action == "manage":
+            elif action["type"] == "manage":
                 manage_queue()
                 
         except KeyboardInterrupt:
             return
 
-def show_completed_library(library):
+def show_completed_library(library, source_name=None):
     search_query = ""
     
     while True:
         console.clear()
-        show_header(i18n.get("downloads.completed_downloads"))
+        title = source_name or i18n.get("downloads.completed_downloads")
+        show_header(title)
         
         filtered = library
         if search_query:
@@ -247,8 +260,7 @@ def manage_queue():
                 console.print(f"[yellow]{i18n.get('downloads.queue_stopped')}[/yellow]")
                 time.sleep(0.5)
             elif action == opt_clear:
-                queue_manager.queue = [i for i in queue_manager.queue if i["status"] in ["pending", "processing"]]
-                queue_manager._save_queue()
+                queue_manager.clear_completed()
                 console.print(f"[green]{i18n.get('downloads.cleared')}[/green]")
                 time.sleep(0.5)
                 

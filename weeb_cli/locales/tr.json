@@ -48,7 +48,18 @@
         "source_changed": "Kaynak {source} olarak değiştirildi.",
         "no_sources": "Bu dil için kaynak bulunamadı.",
         "toggle_on": "{tool} aktif edildi.",
-        "toggle_off": "{tool} devre dışı bırakıldı."
+        "toggle_off": "{tool} devre dışı bırakıldı.",
+        "external_drives": "Harici Diskler",
+        "add_drive": "Disk Ekle",
+        "enter_drive_path": "Disk yolunu girin (örn. D:\\Anime)",
+        "enter_drive_name": "Disk için takma isim",
+        "drive_not_found": "Belirtilen yol bulunamadı.",
+        "drive_added": "Disk eklendi.",
+        "rename_drive": "İsmi Değiştir",
+        "remove_drive": "Diski Kaldır",
+        "confirm_remove": "Bu diski kaldırmak istediğinize emin misiniz?",
+        "drive_renamed": "Disk ismi değiştirildi.",
+        "drive_removed": "Disk kaldırıldı."
     },
     "setup": {
         "welcome": "Weeb CLI'a Hoş Geldiniz!",
@@ -169,6 +180,8 @@
         "manage_queue": "Kuyruk Yönetimi",
         "select_anime": "Anime Seçin",
         "search_library": "Ara",
+        "drive_not_connected": "Disk bağlı değil",
+        "connect_drive": "{name} diskini bağlayın",
         "notification_title": "Weeb CLI",
         "notification_complete": "{anime} - {episode}. bölüm indirildi"
     }

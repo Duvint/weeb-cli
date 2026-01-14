@@ -49,6 +49,7 @@ def open_settings():
         opt_lang = i18n.get("settings.language")
         opt_source = f"{i18n.get('settings.source')} [{display_source}]"
         opt_download = i18n.get("settings.download_settings")
+        opt_drives = i18n.get("settings.external_drives")
         opt_desc = f"{i18n.get('settings.show_description')} [{desc_state}]"
         opt_aria2 = f"{i18n.get('settings.aria2')} [{aria2_state}]"
         opt_ytdlp = f"{i18n.get('settings.ytdlp')} [{ytdlp_state}]"
@@ -56,7 +57,7 @@ def open_settings():
         opt_aria2_conf = f"  ↳ {i18n.get('settings.aria2_config')}"
         opt_ytdlp_conf = f"  ↳ {i18n.get('settings.ytdlp_config')}"
         
-        choices = [opt_lang, opt_source, opt_download, opt_desc, opt_aria2]
+        choices = [opt_lang, opt_source, opt_download, opt_drives, opt_desc, opt_aria2]
         if config.get("aria2_enabled"):
             choices.append(opt_aria2_conf)
             
@@ -85,6 +86,8 @@ def open_settings():
             change_source()
         elif answer == opt_download:
             download_settings_menu()
+        elif answer == opt_drives:
+            external_drives_menu()
         elif answer == opt_desc:
             toggle_description()
         elif answer == opt_aria2:
@@ -250,5 +253,128 @@ def ytdlp_settings_menu():
                     config.set("ytdlp_format", val)
             elif sel is None:
                 return
+        except KeyboardInterrupt:
+            return
+
+
+def external_drives_menu():
+    from weeb_cli.services.local_library import local_library
+    from pathlib import Path
+    
+    while True:
+        console.clear()
+        show_header(i18n.get("settings.external_drives"))
+        
+        drives = local_library.get_external_drives()
+        
+        opt_add = i18n.get("settings.add_drive")
+        
+        choices = [questionary.Choice(opt_add, value="add")]
+        
+        for drive in drives:
+            path = Path(drive["path"])
+            status = "[green]✓[/green]" if path.exists() else "[red]✗[/red]"
+            choices.append(questionary.Choice(
+                f"{drive['name']} ({drive['path']}) {status}",
+                value=drive
+            ))
+        
+        try:
+            sel = questionary.select(
+                i18n.get("settings.external_drives"),
+                choices=choices,
+                pointer=">",
+                use_shortcuts=False
+            ).ask()
+            
+            if sel is None:
+                return
+            
+            if sel == "add":
+                add_external_drive()
+            else:
+                manage_drive(sel)
+                
+        except KeyboardInterrupt:
+            return
+
+def add_external_drive():
+    from weeb_cli.services.local_library import local_library
+    
+    try:
+        path = questionary.text(
+            i18n.get("settings.enter_drive_path"),
+            qmark=">"
+        ).ask()
+        
+        if not path:
+            return
+        
+        from pathlib import Path
+        if not Path(path).exists():
+            console.print(f"[yellow]{i18n.get('settings.drive_not_found')}[/yellow]")
+            time.sleep(1)
+            return
+        
+        name = questionary.text(
+            i18n.get("settings.enter_drive_name"),
+            default=os.path.basename(path) or path,
+            qmark=">"
+        ).ask()
+        
+        if name:
+            local_library.add_external_drive(path, name)
+            console.print(f"[green]{i18n.get('settings.drive_added')}[/green]")
+            time.sleep(0.5)
+            
+    except KeyboardInterrupt:
+        pass
+
+def manage_drive(drive):
+    from weeb_cli.services.local_library import local_library
+    
+    while True:
+        console.clear()
+        show_header(drive["name"])
+        
+        console.print(f"[dim]{drive['path']}[/dim]\n")
+        
+        opt_rename = i18n.get("settings.rename_drive")
+        opt_remove = i18n.get("settings.remove_drive")
+        
+        try:
+            sel = questionary.select(
+                i18n.get("downloads.action_prompt"),
+                choices=[opt_rename, opt_remove],
+                pointer=">",
+                use_shortcuts=False
+            ).ask()
+            
+            if sel is None:
+                return
+            
+            if sel == opt_rename:
+                new_name = questionary.text(
+                    i18n.get("settings.enter_drive_name"),
+                    default=drive["name"],
+                    qmark=">"
+                ).ask()
+                if new_name:
+                    local_library.rename_external_drive(drive["path"], new_name)
+                    drive["name"] = new_name
+                    console.print(f"[green]{i18n.get('settings.drive_renamed')}[/green]")
+                    time.sleep(0.5)
+                    
+            elif sel == opt_remove:
+                confirm = questionary.confirm(
+                    i18n.get("settings.confirm_remove"),
+                    default=False
+                ).ask()
+                if confirm:
+                    local_library.remove_external_drive(drive["path"])
+                    console.print(f"[green]{i18n.get('settings.drive_removed')}[/green]")
+                    time.sleep(0.5)
+                    return
+                    
         except KeyboardInterrupt:
             return

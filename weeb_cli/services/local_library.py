@@ -7,20 +7,72 @@ from weeb_cli.services.progress import progress_tracker
 
 class LocalLibrary:
     def __init__(self):
-        self.download_dir = Path(config.get("download_dir"))
+        self._db = None
     
-    def refresh(self):
-        self.download_dir = Path(config.get("download_dir"))
+    @property
+    def db(self):
+        if self._db is None:
+            from weeb_cli.services.database import db
+            self._db = db
+        return self._db
     
-    def scan_library(self) -> List[Dict]:
-        self.refresh()
+    def get_all_sources(self) -> List[Dict]:
+        sources = []
         
-        if not self.download_dir.exists():
+        download_dir = Path(config.get("download_dir"))
+        if download_dir.exists():
+            sources.append({
+                "path": str(download_dir),
+                "name": "İndirilenler",
+                "type": "local",
+                "available": True
+            })
+        
+        for drive in self.db.get_external_drives():
+            path = Path(drive["path"])
+            sources.append({
+                "path": drive["path"],
+                "name": drive["name"],
+                "type": "external",
+                "available": path.exists()
+            })
+        
+        return sources
+    
+    def scan_library(self, source_path: str = None) -> List[Dict]:
+        if source_path:
+            return self._scan_folder(Path(source_path))
+        
+        download_dir = Path(config.get("download_dir"))
+        return self._scan_folder(download_dir)
+    
+    def scan_all_sources(self) -> List[Dict]:
+        all_anime = []
+        seen_titles = set()
+        
+        for source in self.get_all_sources():
+            if not source["available"]:
+                continue
+            
+            anime_list = self._scan_folder(Path(source["path"]))
+            for anime in anime_list:
+                anime["source"] = source["name"]
+                anime["source_path"] = source["path"]
+                
+                key = anime["title"].lower()
+                if key not in seen_titles:
+                    seen_titles.add(key)
+                    all_anime.append(anime)
+        
+        return sorted(all_anime, key=lambda x: x["title"].lower())
+    
+    def _scan_folder(self, folder: Path) -> List[Dict]:
+        if not folder.exists():
             return []
         
         anime_list = []
         
-        for anime_folder in self.download_dir.iterdir():
+        for anime_folder in folder.iterdir():
             if not anime_folder.is_dir():
                 continue
             
@@ -99,5 +151,17 @@ class LocalLibrary:
                 return f"{size_bytes:.1f} {unit}"
             size_bytes /= 1024
         return f"{size_bytes:.1f} TB"
+    
+    def add_external_drive(self, path: str, name: str = None):
+        self.db.add_external_drive(path, name)
+    
+    def remove_external_drive(self, path: str):
+        self.db.remove_external_drive(path)
+    
+    def rename_external_drive(self, path: str, name: str):
+        self.db.update_drive_name(path, name)
+    
+    def get_external_drives(self):
+        return self.db.get_external_drives()
 
 local_library = LocalLibrary()

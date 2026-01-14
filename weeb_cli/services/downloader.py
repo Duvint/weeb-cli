@@ -1,5 +1,4 @@
 import os
-import json
 import re
 import threading
 import time
@@ -13,27 +12,21 @@ console = Console()
 
 class QueueManager:
     def __init__(self):
-        self.config_dir = Path.home() / ".weeb-cli"
-        self.queue_file = self.config_dir / "download_queue.json"
-        self.queue = []
-        self.active_downloads = 0
+        self._db = None
         self.lock = threading.Lock()
         self.running = False
         self.worker_thread = None
-        self._load_queue()
-
-    def _load_queue(self):
-        if self.queue_file.exists():
-            try:
-                with open(self.queue_file, 'r', encoding='utf-8') as f:
-                    self.queue = json.load(f)
-            except:
-                self.queue = []
-
-    def _save_queue(self):
-        with self.lock:
-            with open(self.queue_file, 'w', encoding='utf-8') as f:
-                json.dump(self.queue, f, indent=2, ensure_ascii=False)
+    
+    @property
+    def db(self):
+        if self._db is None:
+            from weeb_cli.services.database import db
+            self._db = db
+        return self._db
+    
+    @property
+    def queue(self):
+        return self.db.get_queue()
 
     def start_queue(self):
         if self.running:
@@ -61,13 +54,14 @@ class QueueManager:
     def resume_incomplete(self):
         for item in self.queue:
             if item["status"] == "processing":
-                item["status"] = "pending"
-        self._save_queue()
+                self.db.update_queue_item(item["episode_id"], status="pending")
         self.start_queue()
 
     def cancel_incomplete(self):
-        self.queue = [item for item in self.queue if item["status"] not in ["pending", "processing"]]
-        self._save_queue()
+        self.db.clear_completed_queue()
+        for item in self.queue:
+            if item["status"] in ["pending", "processing"]:
+                self.db.update_queue_item(item["episode_id"], status="cancelled")
 
     def is_downloading(self, slug, episode_id=None):
         for item in self.queue:
@@ -83,7 +77,7 @@ class QueueManager:
                 ep_id = ep.get("id")
                 if self.is_downloading(slug, ep_id):
                     continue
-                    
+                
                 item = {
                     "anime_title": anime_title,
                     "episode_number": ep.get("number") or ep.get("ep_num"),
@@ -94,10 +88,8 @@ class QueueManager:
                     "progress": 0,
                     "eta": "?"
                 }
-                if not any(x['episode_id'] == item['episode_id'] and x['status'] in ['pending', 'processing'] for x in self.queue):
-                    self.queue.append(item)
+                if self.db.add_to_queue(item):
                     added += 1
-        self._save_queue()
         return added
 
     def _sanitize_filename(self, name):
@@ -107,14 +99,13 @@ class QueueManager:
         while self.running:
             max_workers = config.get("max_concurrent_downloads", 3)
             
-            with self.lock:
-                active_count = len([x for x in self.queue if x["status"] == "processing"])
-                pending = [x for x in self.queue if x["status"] == "pending"]
+            queue = self.queue
+            active_count = len([x for x in queue if x["status"] == "processing"])
+            pending = [x for x in queue if x["status"] == "pending"]
 
             if active_count < max_workers and pending:
                 to_start = pending[0]
-                to_start["status"] = "processing"
-                self._save_queue()
+                self.db.update_queue_item(to_start["episode_id"], status="processing")
                 
                 t = threading.Thread(target=self._run_task, args=(to_start,))
                 t.start()
@@ -134,9 +125,7 @@ class QueueManager:
         
         try:
             self._download_item(item)
-            item["status"] = "completed"
-            item["progress"] = 100
-            item["eta"] = "-"
+            self.db.update_queue_item(item["episode_id"], status="completed", progress=100, eta="-")
             
             debug(f"Download completed: {item['anime_title']} - Ep {item['episode_number']}")
             
@@ -145,12 +134,8 @@ class QueueManager:
             send_notification(title, msg)
             
         except Exception as e:
-            item["status"] = "failed"
-            item["error"] = str(e)
-            item["eta"] = ""
+            self.db.update_queue_item(item["episode_id"], status="failed", error=str(e), eta="")
             error(f"Download failed: {item['anime_title']} - {str(e)}")
-        
-        self._save_queue()
 
     def _download_item(self, item):
         from weeb_cli.services.watch import get_streams
@@ -197,18 +182,6 @@ class QueueManager:
              
             sources = node if isinstance(node, list) else node.get("links") or node.get("sources")
             if sources and isinstance(sources, list) and len(sources) > 0:
-                def get_quality_score(q):
-                    q_str = str(q).lower()
-                    if "1080" in q_str:
-                        return 0
-                    elif "720" in q_str:
-                        return 1
-                    elif "480" in q_str:
-                        return 2
-                    elif "360" in q_str:
-                        return 3
-                    return 1
-                
                 def get_priority(s):
                     server = (s.get("server") or "").upper()
                     for i, p in enumerate(PRIORITY):
@@ -216,7 +189,7 @@ class QueueManager:
                             return i
                     return 999
                 
-                sorted_sources = sorted(sources, key=lambda s: (get_priority(s), get_quality_score(s.get("quality", ""))))
+                sorted_sources = sorted(sources, key=get_priority)
                 
                 for src in sorted_sources:
                     url = src.get("url")
@@ -226,6 +199,15 @@ class QueueManager:
             elif isinstance(node, dict) and "url" in node:
                 return node["url"]
         return None
+
+    def _update_progress(self, item, progress=None, eta=None):
+        updates = {}
+        if progress is not None:
+            updates["progress"] = progress
+        if eta is not None:
+            updates["eta"] = eta
+        if updates:
+            self.db.update_queue_item(item["episode_id"], **updates)
 
     def _download_aria2(self, url, path, item):
         aria2 = dependency_manager.check_dependency("aria2")
@@ -254,11 +236,10 @@ class QueueManager:
                     try:
                         parts = line.split("ETA:")
                         eta_part = parts[1].split("]")[0]
-                        item["eta"] = eta_part.strip()
                         
                         match = re.search(r'\((\d+)%\)', line)
-                        if match:
-                            item["progress"] = int(match.group(1))
+                        progress = int(match.group(1)) if match else None
+                        self._update_progress(item, progress=progress, eta=eta_part.strip())
                     except:
                         pass
         
@@ -267,13 +248,13 @@ class QueueManager:
 
     def _download_ytdlp(self, url, path, item):
         ytdlp = dependency_manager.check_dependency("yt-dlp")
+        fmt = config.get("ytdlp_format", "best")
         cmd = [
             ytdlp, 
-            "-f", "bestvideo[ext=mp4]+bestaudio[ext=m4a]/bestvideo+bestaudio/best",
+            "-f", fmt,
             "-o", str(path),
             "--no-part", 
             "--newline",
-            "--merge-output-format", "mp4",
             url
         ]
         process = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True, encoding='utf-8', errors='replace')
@@ -285,16 +266,16 @@ class QueueManager:
                 if "[download]" in line and "%" in line:
                     try:
                         p_str = line.split("%")[0].split()[-1]
-                        item["progress"] = float(p_str)
-                        if "ETA" in line:
-                            item["eta"] = line.split("ETA")[-1].strip()
+                        progress = float(p_str)
+                        eta = line.split("ETA")[-1].strip() if "ETA" in line else None
+                        self._update_progress(item, progress=progress, eta=eta)
                     except:
                         pass
         if process.returncode != 0:
             raise Exception("yt-dlp failed")
 
     def _download_ffmpeg(self, url, path, item):
-        item["eta"] = ""
+        self._update_progress(item, eta="")
         ffmpeg = dependency_manager.check_dependency("ffmpeg")
         cmd = [
             ffmpeg,
@@ -308,7 +289,7 @@ class QueueManager:
 
     def _download_generic(self, url, path, item):
         import requests
-        item["eta"] = "..."
+        self._update_progress(item, eta="...")
         with requests.get(url, stream=True) as r:
             r.raise_for_status()
             total = int(r.headers.get('content-length', 0))
@@ -319,17 +300,20 @@ class QueueManager:
                     for chunk in r.iter_content(chunk_size=8192):
                         f.write(chunk)
                         downloaded += len(chunk)
-                        item["progress"] = int((downloaded / total) * 100)
+                        progress = int((downloaded / total) * 100)
                         
                         elapsed = time.time() - start_time
                         if elapsed > 0:
                             speed = downloaded / elapsed
                             remaining = total - downloaded
                             eta_s = remaining / speed
-                            item["eta"] = f"{int(eta_s)}s"
+                            self._update_progress(item, progress=progress, eta=f"{int(eta_s)}s")
             else:
                 with open(path, 'wb') as f:
                     for chunk in r.iter_content(chunk_size=8192):
                         f.write(chunk)
+
+    def clear_completed(self):
+        self.db.clear_completed_queue()
 
 queue_manager = QueueManager()

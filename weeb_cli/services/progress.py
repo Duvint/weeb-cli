@@ -1,76 +1,42 @@
-import json
-from pathlib import Path
 from datetime import datetime
 
 class ProgressTracker:
     def __init__(self):
-        self.config_dir = Path.home() / ".weeb-cli"
-        self.progress_file = self.config_dir / "progress.json"
-        self.history_file = self.config_dir / "search_history.json"
-        self._ensure_file()
-
-    def _ensure_file(self):
-        self.config_dir.mkdir(parents=True, exist_ok=True)
-        if not self.progress_file.exists():
-            with open(self.progress_file, 'w') as f:
-                json.dump({}, f)
-        if not self.history_file.exists():
-            with open(self.history_file, 'w') as f:
-                json.dump([], f)
-
-    def load_progress(self):
-        try:
-            with open(self.progress_file, 'r', encoding='utf-8') as f:
-                return json.load(f)
-        except (json.JSONDecodeError, FileNotFoundError):
-            return {}
-
-    def save_progress(self, data):
-        with open(self.progress_file, 'w', encoding='utf-8') as f:
-            json.dump(data, f, indent=2, ensure_ascii=False)
+        self._db = None
+    
+    @property
+    def db(self):
+        if self._db is None:
+            from weeb_cli.services.database import db
+            self._db = db
+        return self._db
 
     def get_anime_progress(self, slug):
-        data = self.load_progress()
-        return data.get(slug, {
-            "last_watched": 0,
-            "completed": [],
-            "title": "",
-            "total_episodes": 0,
-            "last_watched_at": None
-        })
+        return self.db.get_progress(slug)
 
     def mark_watched(self, slug, ep_number, title=None, total_episodes=None):
-        data = self.load_progress()
-        if slug not in data:
-            data[slug] = {
-                "last_watched": 0,
-                "completed": [],
-                "title": title or slug,
-                "total_episodes": total_episodes or 0,
-                "last_watched_at": None
-            }
+        current = self.db.get_progress(slug)
         
-        completed_set = set(data[slug].get("completed", []))
+        completed_set = set(current.get("completed", []))
         completed_set.add(ep_number)
-        data[slug]["completed"] = sorted(list(completed_set))
+        completed = sorted(list(completed_set))
         
-        if ep_number > data[slug].get("last_watched", 0):
-            data[slug]["last_watched"] = ep_number
+        last_watched = max(current.get("last_watched", 0), ep_number)
         
-        data[slug]["last_watched_at"] = datetime.now().isoformat()
-        
-        if title:
-            data[slug]["title"] = title
-        if total_episodes:
-            data[slug]["total_episodes"] = total_episodes
-             
-        self.save_progress(data)
+        self.db.save_progress(
+            slug,
+            title or current.get("title", slug),
+            last_watched,
+            total_episodes or current.get("total_episodes", 0),
+            completed,
+            datetime.now().isoformat()
+        )
 
     def get_all_anime(self):
-        return self.load_progress()
+        return self.db.get_all_progress()
 
     def get_stats(self):
-        data = self.load_progress()
+        data = self.db.get_all_progress()
         total_anime = len(data)
         total_episodes = sum(len(a.get("completed", [])) for a in data.values())
         total_hours = round(total_episodes * 24 / 60, 1)
@@ -92,7 +58,7 @@ class ProgressTracker:
         }
 
     def get_completed_anime(self):
-        data = self.load_progress()
+        data = self.db.get_all_progress()
         completed = []
         for slug, info in data.items():
             total = info.get("total_episodes", 0)
@@ -102,7 +68,7 @@ class ProgressTracker:
         return completed
 
     def get_in_progress_anime(self):
-        data = self.load_progress()
+        data = self.db.get_all_progress()
         in_progress = []
         for slug, info in data.items():
             total = info.get("total_episodes", 0)
@@ -112,25 +78,9 @@ class ProgressTracker:
         return sorted(in_progress, key=lambda x: x.get("last_watched_at") or "", reverse=True)
 
     def add_search_history(self, query):
-        try:
-            with open(self.history_file, 'r', encoding='utf-8') as f:
-                history = json.load(f)
-        except:
-            history = []
-        
-        if query in history:
-            history.remove(query)
-        history.insert(0, query)
-        history = history[:10]
-        
-        with open(self.history_file, 'w', encoding='utf-8') as f:
-            json.dump(history, f, ensure_ascii=False)
+        self.db.add_search_history(query)
 
     def get_search_history(self):
-        try:
-            with open(self.history_file, 'r', encoding='utf-8') as f:
-                return json.load(f)
-        except:
-            return []
+        return self.db.get_search_history()
 
 progress_tracker = ProgressTracker()

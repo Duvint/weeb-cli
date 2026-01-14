@@ -48,7 +48,18 @@
         "source_changed": "Source changed to {source}.",
         "no_sources": "No sources available for this language.",
         "toggle_on": "{tool} enabled.",
-        "toggle_off": "{tool} disabled."
+        "toggle_off": "{tool} disabled.",
+        "external_drives": "External Drives",
+        "add_drive": "Add Drive",
+        "enter_drive_path": "Enter drive path (e.g. D:\\Anime)",
+        "enter_drive_name": "Nickname for drive",
+        "drive_not_found": "Specified path not found.",
+        "drive_added": "Drive added.",
+        "rename_drive": "Rename",
+        "remove_drive": "Remove Drive",
+        "confirm_remove": "Are you sure you want to remove this drive?",
+        "drive_renamed": "Drive renamed.",
+        "drive_removed": "Drive removed."
     },
     "setup": {
         "welcome": "Welcome to Weeb CLI!",
@@ -169,6 +180,8 @@
         "manage_queue": "Queue Management",
         "select_anime": "Select Anime",
         "search_library": "Search",
+        "drive_not_connected": "Drive not connected",
+        "connect_drive": "Connect {name} drive",
         "notification_title": "Weeb CLI",
         "notification_complete": "{anime} - Episode {episode} downloaded"
     }
