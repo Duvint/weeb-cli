@@ -14,6 +14,8 @@ import time
 console = Console()
 
 def show_downloads():
+    local_library.smart_index_all()
+    
     while True:
         console.clear()
         show_header(i18n.get("downloads.title"))
@@ -24,10 +26,11 @@ def show_downloads():
         choices = []
         
         indexed_count = len(local_library.get_indexed_anime())
-        choices.append(questionary.Choice(
-            f"⌕ {i18n.get('downloads.search_all')} ({indexed_count} anime)",
-            value={"type": "search_all"}
-        ))
+        if indexed_count > 0:
+            choices.append(questionary.Choice(
+                f"⌕ {i18n.get('downloads.search_all')} ({indexed_count} anime)",
+                value={"type": "search_all"}
+            ))
         
         for source in sources:
             if source["available"]:
@@ -41,10 +44,11 @@ def show_downloads():
             else:
                 indexed = [a for a in local_library.get_indexed_anime() if a["source_path"] == source["path"]]
                 count = len(indexed)
-                choices.append(questionary.Choice(
-                    f"○ {source['name']} ({count} anime) - {i18n.get('downloads.offline')}",
-                    value={"type": "offline", "data": source}
-                ))
+                if count > 0:
+                    choices.append(questionary.Choice(
+                        f"○ {source['name']} ({count} anime) - {i18n.get('downloads.offline')}",
+                        value={"type": "offline", "data": source}
+                    ))
         
         if active_queue:
             is_running = queue_manager.is_running()
@@ -60,10 +64,13 @@ def show_downloads():
                 value={"type": "manage"}
             ))
         
-        choices.append(questionary.Choice(
-            f"↻ {i18n.get('downloads.reindex')}",
-            value={"type": "reindex"}
-        ))
+        if not choices:
+            console.print(f"[dim]{i18n.get('downloads.empty')}[/dim]")
+            try:
+                input(i18n.get("common.continue_key"))
+            except KeyboardInterrupt:
+                pass
+            return
         
         try:
             action = questionary.select(
@@ -79,7 +86,6 @@ def show_downloads():
             if action["type"] == "search_all":
                 search_all_sources()
             elif action["type"] == "source":
-                local_library.index_source(action["data"]["path"], action["data"]["name"])
                 library = local_library.scan_library(action["data"]["path"])
                 show_completed_library(library, action["data"]["name"])
             elif action["type"] == "offline":
@@ -88,11 +94,6 @@ def show_downloads():
                 show_queue_live()
             elif action["type"] == "manage":
                 manage_queue()
-            elif action["type"] == "reindex":
-                with console.status(i18n.get("downloads.indexing"), spinner="dots"):
-                    count = local_library.index_all_sources()
-                console.print(f"[green]{i18n.t('downloads.indexed', count=count)}[/green]")
-                time.sleep(1)
                 
         except KeyboardInterrupt:
             return

@@ -189,6 +189,59 @@ class LocalLibrary:
         
         return count
     
+    def smart_index_source(self, source_path: str, source_name: str):
+        path = Path(source_path)
+        if not path.exists():
+            return 0
+        
+        indexed = {a["folder_path"]: a for a in self.db.get_all_indexed_anime() if a["source_path"] == source_path}
+        
+        current_folders = set()
+        added = 0
+        
+        for anime_folder in path.iterdir():
+            if not anime_folder.is_dir():
+                continue
+            
+            folder_path = str(anime_folder)
+            current_folders.add(folder_path)
+            
+            episodes = self._scan_anime_folder(anime_folder)
+            if not episodes:
+                continue
+            
+            if folder_path in indexed:
+                if indexed[folder_path]["episode_count"] != len(episodes):
+                    self.db.index_anime(
+                        title=anime_folder.name,
+                        source_path=source_path,
+                        source_name=source_name,
+                        folder_path=folder_path,
+                        episode_count=len(episodes)
+                    )
+            else:
+                self.db.index_anime(
+                    title=anime_folder.name,
+                    source_path=source_path,
+                    source_name=source_name,
+                    folder_path=folder_path,
+                    episode_count=len(episodes)
+                )
+                added += 1
+        
+        for folder_path in indexed:
+            if folder_path not in current_folders:
+                self.db.remove_indexed_anime(folder_path)
+        
+        return added
+    
+    def smart_index_all(self):
+        total = 0
+        for source in self.get_all_sources():
+            if source["available"]:
+                total += self.smart_index_source(source["path"], source["name"])
+        return total
+    
     def index_all_sources(self):
         total = 0
         for source in self.get_all_sources():
