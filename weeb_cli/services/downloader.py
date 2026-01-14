@@ -197,6 +197,18 @@ class QueueManager:
              
             sources = node if isinstance(node, list) else node.get("links") or node.get("sources")
             if sources and isinstance(sources, list) and len(sources) > 0:
+                def get_quality_score(q):
+                    q_str = str(q).lower()
+                    if "1080" in q_str:
+                        return 0
+                    elif "720" in q_str:
+                        return 1
+                    elif "480" in q_str:
+                        return 2
+                    elif "360" in q_str:
+                        return 3
+                    return 1
+                
                 def get_priority(s):
                     server = (s.get("server") or "").upper()
                     for i, p in enumerate(PRIORITY):
@@ -204,7 +216,7 @@ class QueueManager:
                             return i
                     return 999
                 
-                sorted_sources = sorted(sources, key=get_priority)
+                sorted_sources = sorted(sources, key=lambda s: (get_priority(s), get_quality_score(s.get("quality", ""))))
                 
                 for src in sorted_sources:
                     url = src.get("url")
@@ -255,13 +267,13 @@ class QueueManager:
 
     def _download_ytdlp(self, url, path, item):
         ytdlp = dependency_manager.check_dependency("yt-dlp")
-        fmt = config.get("ytdlp_format", "best")
         cmd = [
             ytdlp, 
-            "-f", fmt,
+            "-f", "bestvideo[ext=mp4]+bestaudio[ext=m4a]/bestvideo+bestaudio/best",
             "-o", str(path),
             "--no-part", 
             "--newline",
+            "--merge-output-format", "mp4",
             url
         ]
         process = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True, encoding='utf-8', errors='replace')

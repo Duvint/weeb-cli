@@ -16,7 +16,7 @@ DEFAULT_CONFIG = {
     "ytdlp_format": "bestvideo+bestaudio/best",
     "scraping_source": "animecix",
     "show_description": True,
-    "debug_mode": False
+    "debug_mode": True
 }
 
 class Config:
