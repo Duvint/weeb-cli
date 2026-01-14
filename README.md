@@ -75,10 +75,7 @@ yay -S weeb-cli
 brew install ewgsta/tap/weeb-cli
 ```
 
-### Chocolatey (Windows)
-```powershell
-choco install weeb-cli
-```
+### ~~Chocolatey (Windows)~~ *(onay bekliyor)*
 
 ### Scoop (Windows)
 ```powershell

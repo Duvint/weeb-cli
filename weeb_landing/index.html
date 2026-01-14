@@ -732,56 +732,6 @@
 
 
 
-                        <!-- Chocolatey -->
-
-                        <div class="group">
-
-                            <div
-
-                                class="bg-surface border border-border p-6 rounded-sm hover:border-gray-700 transition-colors h-full flex flex-col justify-between">
-
-                                <div class="flex items-center justify-between mb-4">
-
-                                    <div class="flex items-center gap-3">
-
-                                        <i class="ph-bold ph-cookie text-xl"></i>
-
-                                        <h3 class="font-mono text-sm font-bold text-white">Chocolatey</h3>
-
-                                    </div>
-
-                                    <span
-
-                                        class="text-[10px] font-mono border border-border px-2 py-1 rounded text-subtext">Windows</span>
-
-                                </div>
-
-                                <div class="bg-black/40 rounded p-4 font-mono text-xs text-gray-300 flex justify-between items-center group-hover:bg-black/60 transition-colors cursor-pointer"
-
-                                    @click="copy('choco install weeb-cli')">
-
-                                    <span class="select-text hover:text-white transition-colors truncate mr-2"
-
-                                        :class="copied === 'choco install weeb-cli' ? 'text-green-400' : ''">choco
-
-                                        install weeb-cli</span>
-
-                                    <button class="text-subtext hover:text-white transition-colors shrink-0">
-
-                                        <i class="ph text-lg"
-
-                                            :class="copied === 'choco install weeb-cli' ? 'ph-check text-green-400' : 'ph-copy'"></i>
-
-                                    </button>
-
-                                </div>
-
-                            </div>
-
-                        </div>
-
-
-
                         <!-- Scoop -->
 
                         <div class="group lg:col-span-2">
