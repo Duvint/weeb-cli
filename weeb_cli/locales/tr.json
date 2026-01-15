@@ -26,6 +26,7 @@
     },
     "settings": {
         "title": "Ayarlar",
+        "trackers": "MyAnimeList & AniList",
         "language": "Dil Değiştir",
         "source": "Kaynak Seçimi",
         "aria2": "Aria2 İndirici",

@@ -65,11 +65,8 @@ def open_settings():
         if config.get("ytdlp_enabled"):
             choices.append(opt_ytdlp_conf)
         
-        opt_anilist = i18n.get("settings.anilist")
-        choices.append(opt_anilist)
-        
-        opt_mal = i18n.get("settings.mal")
-        choices.append(opt_mal)
+        opt_trackers = i18n.get("settings.trackers")
+        choices.append(opt_trackers)
         
         try:
             answer = questionary.select(
@@ -104,10 +101,8 @@ def open_settings():
             toggle_config("ytdlp_enabled", "yt-dlp")
         elif answer == opt_ytdlp_conf:
             ytdlp_settings_menu()
-        elif answer == opt_anilist:
-            anilist_settings_menu()
-        elif answer == opt_mal:
-            mal_settings_menu()
+        elif answer == opt_trackers:
+            trackers_menu()
         elif answer is None:
             return
 
@@ -386,6 +381,34 @@ def manage_drive(drive):
                     time.sleep(0.5)
                     return
                     
+        except KeyboardInterrupt:
+            return
+
+
+def trackers_menu():
+    while True:
+        console.clear()
+        show_header(i18n.get("settings.trackers"))
+        
+        opt_anilist = "AniList"
+        opt_mal = "MyAnimeList"
+        
+        try:
+            sel = questionary.select(
+                i18n.get("downloads.action_prompt"),
+                choices=[opt_anilist, opt_mal],
+                pointer=">",
+                use_shortcuts=False
+            ).ask()
+            
+            if sel is None:
+                return
+            
+            if sel == opt_anilist:
+                anilist_settings_menu()
+            elif sel == opt_mal:
+                mal_settings_menu()
+                
         except KeyboardInterrupt:
             return
 
