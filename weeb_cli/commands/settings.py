@@ -65,6 +65,9 @@ def open_settings():
         if config.get("ytdlp_enabled"):
             choices.append(opt_ytdlp_conf)
         
+        opt_anilist = i18n.get("settings.anilist")
+        choices.append(opt_anilist)
+        
         try:
             answer = questionary.select(
                 i18n.get("settings.title"),
@@ -98,6 +101,8 @@ def open_settings():
             toggle_config("ytdlp_enabled", "yt-dlp")
         elif answer == opt_ytdlp_conf:
             ytdlp_settings_menu()
+        elif answer == opt_anilist:
+            anilist_settings_menu()
         elif answer is None:
             return
 
@@ -378,3 +383,98 @@ def manage_drive(drive):
                     
         except KeyboardInterrupt:
             return
+
+
+def anilist_settings_menu():
+    from weeb_cli.services.tracker import anilist_tracker
+    import webbrowser
+    
+    while True:
+        console.clear()
+        show_header("AniList")
+        
+        if anilist_tracker.is_authenticated():
+            username = anilist_tracker.get_username()
+            console.print(f"[green]{i18n.t('settings.anilist_connected', user=username)}[/green]\n")
+            
+            pending = anilist_tracker.get_pending_count()
+            if pending > 0:
+                console.print(f"[yellow]{i18n.t('settings.anilist_pending', count=pending)}[/yellow]\n")
+            
+            opt_sync = i18n.get("settings.anilist_sync")
+            opt_logout = i18n.get("settings.anilist_logout")
+            
+            choices = []
+            if pending > 0:
+                choices.append(opt_sync)
+            choices.append(opt_logout)
+            
+            try:
+                sel = questionary.select(
+                    i18n.get("downloads.action_prompt"),
+                    choices=choices,
+                    pointer=">",
+                    use_shortcuts=False
+                ).ask()
+                
+                if sel is None:
+                    return
+                
+                if sel == opt_sync:
+                    with console.status(i18n.get("common.processing"), spinner="dots"):
+                        synced = anilist_tracker.sync_pending()
+                    console.print(f"[green]{i18n.t('settings.anilist_synced', count=synced)}[/green]")
+                    time.sleep(1)
+                elif sel == opt_logout:
+                    confirm = questionary.confirm(
+                        i18n.get("settings.confirm_logout"),
+                        default=False
+                    ).ask()
+                    if confirm:
+                        anilist_tracker.logout()
+                        console.print(f"[green]{i18n.get('settings.anilist_logged_out')}[/green]")
+                        time.sleep(1)
+                        return
+                        
+            except KeyboardInterrupt:
+                return
+        else:
+            console.print(f"[dim]{i18n.get('settings.anilist_not_connected')}[/dim]\n")
+            
+            opt_login = i18n.get("settings.anilist_login")
+            
+            try:
+                sel = questionary.select(
+                    i18n.get("downloads.action_prompt"),
+                    choices=[opt_login],
+                    pointer=">",
+                    use_shortcuts=False
+                ).ask()
+                
+                if sel is None:
+                    return
+                
+                if sel == opt_login:
+                    auth_url = anilist_tracker.get_auth_url()
+                    console.print(f"\n[cyan]{i18n.get('settings.anilist_opening_browser')}[/cyan]")
+                    webbrowser.open(auth_url)
+                    
+                    console.print(f"\n[dim]{i18n.get('settings.anilist_paste_token')}[/dim]\n")
+                    
+                    token = questionary.text(
+                        "Token:",
+                        qmark=">"
+                    ).ask()
+                    
+                    if token:
+                        with console.status(i18n.get("common.processing"), spinner="dots"):
+                            success = anilist_tracker.authenticate(token.strip())
+                        
+                        if success:
+                            console.print(f"[green]{i18n.get('settings.anilist_login_success')}[/green]")
+                        else:
+                            console.print(f"[red]{i18n.get('settings.anilist_login_failed')}[/red]")
+                        time.sleep(1)
+                        
+            except KeyboardInterrupt:
+                return

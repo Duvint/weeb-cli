@@ -327,6 +327,13 @@ def handle_watch_flow(slug, details):
                             total_episodes=total_eps
                         )
                         
+                        from weeb_cli.services.tracker import anilist_tracker
+                        anilist_tracker.update_progress(
+                            details.get("title"),
+                            n,
+                            total_eps
+                        )
+                        
                         completed_ids.add(n)
                         if n >= next_ep_num:
                             next_ep_num = n + 1

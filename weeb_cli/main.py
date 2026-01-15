@@ -54,6 +54,7 @@ def start():
 
     check_network()
     check_ffmpeg_silent()
+    sync_anilist_pending()
 
     show_main_menu()
 
@@ -75,6 +76,16 @@ def check_incomplete_downloads():
                 queue_manager.cancel_incomplete()
         except KeyboardInterrupt:
             queue_manager.cancel_incomplete()
+
+def sync_anilist_pending():
+    from weeb_cli.services.tracker import anilist_tracker
+    
+    if anilist_tracker.is_authenticated():
+        pending = anilist_tracker.get_pending_count()
+        if pending > 0:
+            synced = anilist_tracker.sync_pending()
+            if synced > 0:
+                console.print(f"[dim]AniList: {synced} {i18n.get('settings.anilist_synced').split()[1]}[/dim]")
 
 @app.callback(invoke_without_command=True)
 def main(ctx: typer.Context):

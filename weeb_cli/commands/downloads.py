@@ -348,6 +348,13 @@ def play_local_episode(anime, episode):
                     episode["number"],
                     anime["episode_count"]
                 )
+                
+                from weeb_cli.services.tracker import anilist_tracker
+                anilist_tracker.update_progress(
+                    anime["title"],
+                    episode["number"],
+                    anime["episode_count"]
+                )
         except:
             pass
 

@@ -59,7 +59,21 @@
         "remove_drive": "Remove Drive",
         "confirm_remove": "Are you sure you want to remove this drive?",
         "drive_renamed": "Drive renamed.",
-        "drive_removed": "Drive removed."
+        "drive_removed": "Drive removed.",
+        "anilist": "AniList",
+        "anilist_connected": "Connected: {user}",
+        "anilist_not_connected": "Connect your AniList account to sync your watch history.",
+        "anilist_login": "Connect to AniList",
+        "anilist_logout": "Disconnect",
+        "anilist_sync": "Sync Pending Updates",
+        "anilist_pending": "{count} updates pending",
+        "anilist_synced": "{count} updates synced",
+        "anilist_opening_browser": "Opening browser...",
+        "anilist_paste_token": "After logging in, paste the token from the URL here:",
+        "anilist_login_success": "Successfully connected to AniList!",
+        "anilist_login_failed": "Connection failed. Token may be invalid.",
+        "anilist_logged_out": "Disconnected from AniList.",
+        "confirm_logout": "Are you sure you want to disconnect?"
     },
     "setup": {
         "welcome": "Welcome to Weeb CLI!",

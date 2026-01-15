@@ -59,7 +59,21 @@
         "remove_drive": "Diski Kaldır",
         "confirm_remove": "Bu diski kaldırmak istediğinize emin misiniz?",
         "drive_renamed": "Disk ismi değiştirildi.",
-        "drive_removed": "Disk kaldırıldı."
+        "drive_removed": "Disk kaldırıldı.",
+        "anilist": "AniList",
+        "anilist_connected": "Bağlı: {user}",
+        "anilist_not_connected": "AniList hesabınıza bağlanarak izleme geçmişinizi senkronize edebilirsiniz.",
+        "anilist_login": "AniList'e Bağlan",
+        "anilist_logout": "Bağlantıyı Kes",
+        "anilist_sync": "Bekleyenleri Senkronize Et",
+        "anilist_pending": "{count} güncelleme bekliyor",
+        "anilist_synced": "{count} güncelleme senkronize edildi",
+        "anilist_opening_browser": "Tarayıcı açılıyor...",
+        "anilist_paste_token": "Tarayıcıda giriş yaptıktan sonra URL'deki token'ı buraya yapıştırın:",
+        "anilist_login_success": "AniList'e başarıyla bağlandı!",
+        "anilist_login_failed": "Bağlantı başarısız. Token geçersiz olabilir.",
+        "anilist_logged_out": "AniList bağlantısı kesildi.",
+        "confirm_logout": "Bağlantıyı kesmek istediğinize emin misiniz?"
     },
     "setup": {
         "welcome": "Weeb CLI'a Hoş Geldiniz!",
