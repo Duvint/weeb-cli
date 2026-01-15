@@ -37,6 +37,8 @@ Connection: close\r
         @keyframes draw{to{stroke-dashoffset:0}}
         .status{font-size:1.1rem;color:#4ade80;margin-bottom:1.5rem}
         .hint{font-size:0.75rem;color:#555;margin-top:2rem}
+        .spinner{width:24px;height:24px;border:2px solid #333;border-top-color:#e6e6e6;border-radius:50%;animation:spin 0.8s linear infinite;margin:0 auto 1.5rem}
+        @keyframes spin{to{transform:rotate(360deg)}}
     </style>
 </head>
 <body>
@@ -44,10 +46,25 @@ Connection: close\r
     <div class="container">
         <div class="logo">Weeb CLI</div>
         <div class="subtitle">AniList</div>
-        <svg class="checkmark" viewBox="0 0 24 24"><path d="M4 12l6 6L20 6"/></svg>
-        <div class="status">Basarili!</div>
-        <div class="hint">Bu pencereyi kapatabilirsiniz</div>
+        <div id="content">
+            <div class="spinner"></div>
+            <div class="status" style="color:#888">Yetkilendiriliyor...</div>
+        </div>
+        <div class="hint">Bu pencere otomatik kapanacak</div>
     </div>
+    <script>
+        const hash = window.location.hash.substring(1);
+        const params = new URLSearchParams(hash);
+        const token = params.get('access_token');
+        if (token) {
+            fetch('/token?t=' + encodeURIComponent(token))
+                .then(() => {
+                    document.getElementById('content').innerHTML = '<svg class="checkmark" viewBox="0 0 24 24"><path d="M4 12l6 6L20 6"/></svg><div class="status">Basarili!</div>';
+                });
+        } else {
+            document.getElementById('content').innerHTML = '<div class="status" style="color:#f87171">Token bulunamadi</div>';
+        }
+    </script>
 </body>
 </html>'''
 
@@ -96,40 +113,44 @@ def wait_for_anilist_callback(timeout=120):
         sock.listen(1)
         sock.settimeout(timeout)
         
-        while True:
+        token = None
+        start_time = time.time()
+        
+        while time.time() - start_time < timeout:
             try:
                 conn, addr = sock.accept()
                 conn.settimeout(10)
                 
                 data = conn.recv(4096).decode("utf-8", errors="ignore")
+                first_line = data.split("\r\n")[0] if data else ""
                 
-                code = None
-                if "GET " in data:
-                    first_line = data.split("\r\n")[0]
-                    if "?" in first_line:
+                if "/token?" in first_line:
+                    if "?t=" in first_line:
                         query_part = first_line.split("?")[1].split(" ")[0]
                         params = parse_qs(query_part)
-                        code = params.get("code", [None])[0]
-                
-                if code:
-                    conn.sendall(CALLBACK_HTML_SUCCESS.encode("utf-8"))
+                        token = params.get("t", [None])[0]
+                    
+                    response = "HTTP/1.1 200 OK\r\nContent-Type: text/plain\r\nConnection: close\r\n\r\nOK"
+                    conn.sendall(response.encode("utf-8"))
+                    conn.close()
+                    
+                    if token:
+                        sock.close()
+                        return token
                 else:
-                    conn.sendall(CALLBACK_HTML_ERROR.encode("utf-8"))
-                
-                conn.close()
-                
-                if code:
-                    sock.close()
-                    return code
+                    conn.sendall(CALLBACK_HTML_SUCCESS.encode("utf-8"))
+                    conn.close()
                     
             except socket.timeout:
-                sock.close()
-                return None
+                continue
             except Exception:
                 continue
+        
+        sock.close()
+        return None
                 
     except Exception as e:
-        logger.error(f"AniList callback server error: {e}")
+        logger.error(f"AniList callback error: {e}")
         try:
             sock.close()
         except:
@@ -165,17 +186,12 @@ class AniListTracker:
         return self.token is not None
     
     def get_auth_url(self):
-        return f"https://anilist.co/api/v2/oauth/authorize?client_id={ANILIST_CLIENT_ID}&redirect_uri={ANILIST_REDIRECT_URI}&response_type=code"
+        return f"https://anilist.co/api/v2/oauth/authorize?client_id={ANILIST_CLIENT_ID}&response_type=token"
     
     def start_auth_server(self, timeout=120):
         auth_url = self.get_auth_url()
         webbrowser.open(auth_url)
-        
-        code = wait_for_anilist_callback(timeout)
-        
-        if code:
-            return self._exchange_code(code)
-        return None
+        return wait_for_anilist_callback(timeout)
     
     def _exchange_code(self, code):
         try:
@@ -356,7 +372,7 @@ class AniListTracker:
 anilist_tracker = AniListTracker()
 
 
-MAL_PROXY_URL = "https://weeb-mal-proxy.vercel.app"
+MAL_PROXY_URL = "https://weeb-malproxy.vercel.app"
 MAL_LOCAL_PORT = 8766
 
 MAL_CALLBACK_SUCCESS = '''HTTP/1.1 200 OK\r
