@@ -48,9 +48,7 @@ Connection: close\r
         <div class="subtitle">AniList</div>
         <div id="content">
             <div class="spinner"></div>
-            <div class="status" style="color:#888">Yetkilendiriliyor...</div>
         </div>
-        <div class="hint">Bu pencere otomatik kapanacak</div>
     </div>
     <script>
         const hash = window.location.hash.substring(1);
@@ -59,10 +57,10 @@ Connection: close\r
         if (token) {
             fetch('/token?t=' + encodeURIComponent(token))
                 .then(() => {
-                    document.getElementById('content').innerHTML = '<svg class="checkmark" viewBox="0 0 24 24"><path d="M4 12l6 6L20 6"/></svg><div class="status">Basarili!</div>';
+                    document.getElementById('content').innerHTML = '<svg class="checkmark" viewBox="0 0 24 24"><path d="M4 12l6 6L20 6"/></svg>';
                 });
         } else {
-            document.getElementById('content').innerHTML = '<div class="status" style="color:#f87171">Token bulunamadi</div>';
+            document.getElementById('content').innerHTML = '<svg class="checkmark" viewBox="0 0 24 24" style="stroke:#f87171"><path d="M6 6l12 12M6 18L18 6"/></svg>';
         }
     </script>
 </body>
@@ -98,7 +96,6 @@ Connection: close\r
         <div class="logo">Weeb CLI</div>
         <div class="subtitle">AniList</div>
         <div class="status">Yetkilendirme basarisiz</div>
-        <div class="hint">Bu pencereyi kapatabilirsiniz</div>
     </div>
 </body>
 </html>'''
@@ -408,8 +405,6 @@ Connection: close\r
         <div class="logo">Weeb CLI</div>
         <div class="subtitle">MyAnimeList</div>
         <svg class="checkmark" viewBox="0 0 24 24"><path d="M4 12l6 6L20 6"/></svg>
-        <div class="status">Basarili!</div>
-        <div class="hint">Bu pencereyi kapatabilirsiniz</div>
     </div>
 </body>
 </html>'''
@@ -423,7 +418,7 @@ Connection: close\r
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Weeb CLI - MAL</title>
+    <title>Weeb CLI</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@400;500&family=Zen+Kaku+Gothic+New:wght@300;400&display=swap" rel="stylesheet">
@@ -434,8 +429,9 @@ Connection: close\r
         .container{position:relative;z-index:2;text-align:center;padding:3rem}
         .logo{font-family:'Shippori Mincho',serif;font-size:2.5rem;font-weight:500;margin-bottom:0.5rem}
         .subtitle{font-size:0.85rem;color:#2e51a2;margin-bottom:2rem;font-weight:500}
-        .status{font-size:1.1rem;color:#f87171;margin-bottom:1.5rem}
-        .hint{font-size:0.75rem;color:#555;margin-top:2rem}
+        .checkmark{width:48px;height:48px;margin:0 auto;stroke:#f87171;stroke-width:2;fill:none}
+        .checkmark path{stroke-dasharray:100;stroke-dashoffset:100;animation:draw 0.5s ease forwards}
+        @keyframes draw{to{stroke-dashoffset:0}}
     </style>
 </head>
 <body>
@@ -443,8 +439,7 @@ Connection: close\r
     <div class="container">
         <div class="logo">Weeb CLI</div>
         <div class="subtitle">MyAnimeList</div>
-        <div class="status">Yetkilendirme basarisiz</div>
-        <div class="hint">Bu pencereyi kapatabilirsiniz</div>
+        <svg class="checkmark" viewBox="0 0 24 24"><path d="M6 6l12 12M6 18L18 6"/></svg>
     </div>
 </body>
 </html>'''
