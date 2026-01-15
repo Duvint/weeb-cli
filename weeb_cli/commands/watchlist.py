@@ -84,7 +84,7 @@ def show_completed_list():
 
 def show_in_progress_list():
     from weeb_cli.commands.search import show_anime_details
-    from weeb_cli.commands.downloads import show_local_anime_episodes
+    from weeb_cli.commands.downloads import show_anime_episodes
     from weeb_cli.services.local_library import local_library
     
     console.clear()
@@ -137,7 +137,7 @@ def show_in_progress_list():
                     "episode_count": local_data["episode_count"],
                     "source": local_data["source_name"]
                 }
-                show_local_anime_episodes(anime_info)
+                show_anime_episodes(anime_info)
             else:
                 anime = selected["anime"]
                 anime_data = {
