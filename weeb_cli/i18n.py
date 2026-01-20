@@ -39,7 +39,7 @@ class I18n:
             print(f"Error loading translations: {e}")
             self.translations = {}
 
-    def get(self, key_path, **kwargs):
+    def get(self, key_path, default=None, **kwargs):
         keys = key_path.split(".")
         value = self.translations
         
@@ -47,10 +47,10 @@ class I18n:
             if isinstance(value, dict):
                 value = value.get(key)
             else:
-                return key_path
+                return default if default is not None else key_path
 
         if value is None:
-            return key_path
+            return default if default is not None else key_path
 
         if isinstance(value, str):
             try:
