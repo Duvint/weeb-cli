@@ -33,7 +33,6 @@ def _notify_windows(title: str, message: str):
     except ImportError:
         pass
     
-    # Fallback to win10toast
     try:
         from win10toast import ToastNotifier
         toaster = ToastNotifier()
@@ -42,7 +41,6 @@ def _notify_windows(title: str, message: str):
     except ImportError:
         pass
     
-    # Last resort: PowerShell toast (no MessageBox!)
     try:
         ps_script = f'''
         [Windows.UI.Notifications.ToastNotificationManager, Windows.UI.Notifications, ContentType = WindowsRuntime] | Out-Null
