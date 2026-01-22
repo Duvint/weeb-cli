@@ -142,6 +142,19 @@ class QueueManager:
         
         debug(f"Starting download: {item['anime_title']} - Ep {item['episode_number']}")
         
+        try:
+            import shutil
+            download_dir = config.get("download_dir")
+            total, used, free = shutil.disk_usage(download_dir)
+            
+            if free < 500 * 1024 * 1024:
+                error_msg = i18n.get("downloads.disk_full", "Yetersiz disk alanı!")
+                self.db.update_queue_item(item["episode_id"], status="failed", error=error_msg, eta="")
+                send_notification(i18n.get("common.error"), f"{item['anime_title']}: {error_msg}")
+                return
+        except Exception as e:
+            error(f"Disk check failed: {e}")
+
         for attempt in range(max_retries):
             try:
                 if attempt > 0:

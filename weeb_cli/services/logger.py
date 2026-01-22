@@ -21,6 +21,11 @@ def _setup_logger():
         log_dir = Path.home() / ".weeb-cli" / "logs"
         log_dir.mkdir(parents=True, exist_ok=True)
         
+        try:
+            _clean_old_logs(log_dir)
+        except:
+            pass
+        
         log_file = log_dir / f"debug_{datetime.now().strftime('%Y%m%d')}.log"
         
         handler = logging.FileHandler(log_file, encoding='utf-8')
@@ -53,3 +58,14 @@ def reload():
     global _logger
     _logger = None
     get_logger()
+
+def _clean_old_logs(log_dir: Path):
+    """Delete logs older than 7 days"""
+    try:
+        import time
+        cutoff = time.time() - (7 * 86400) # 7 days
+        for log in log_dir.glob("debug_*.log"):
+            if log.stat().st_mtime < cutoff:
+                log.unlink()
+    except:
+        pass

@@ -224,6 +224,7 @@
         "notification_complete": "{anime} - {episode}. bölüm indirildi",
         "retry_failed": "Başarısızları Yeniden Dene",
         "retrying": "{count} indirme yeniden deneniyor...",
+        "disk_full": "Disk alanı yetersiz!",
         "episode_short": "Blm"
     }
 }
