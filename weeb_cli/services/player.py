@@ -15,7 +15,7 @@ class Player:
     def is_installed(self):
         return self.mpv_path is not None
 
-    def play(self, url, title=None, start_time=None, headers=None):
+    def play(self, url, title=None, start_time=None, headers=None, anime_title=None, episode_number=None, total_episodes=None):
         if not self.mpv_path:
             console.print(f"[yellow]{i18n.get('player.installing_mpv')}[/yellow]")
             if dependency_manager.install_dependency("mpv"):
@@ -24,6 +24,11 @@ class Player:
         if not self.mpv_path:
             console.print(f"[red]{i18n.get('player.install_failed')}[/red]")
             return False
+
+        from weeb_cli.services.discord_rpc import discord_rpc
+        
+        if anime_title and episode_number:
+            discord_rpc.update_presence(anime_title, episode_number, total_episodes)
 
         cmd = [self.mpv_path, url]
         if title:
@@ -43,5 +48,7 @@ class Player:
         except Exception as e:
             console.print(f"[red]Error running player: {e}[/red]")
             return False
+        finally:
+            discord_rpc.clear_presence()
 
 player = Player()

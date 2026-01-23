@@ -52,6 +52,7 @@
 ### Additional Features
 - SQLite database (fast and reliable)
 - System notifications on download completion
+- Discord RPC integration (show what you're watching on Discord)
 - Search history
 - Debug mode and logging
 - Automatic update checks
@@ -118,6 +119,7 @@ Config location: `~/.weeb-cli/weeb.db` (SQLite)
 | `aria2_enabled` | Use Aria2 | `true` |
 | `max_concurrent_downloads` | Concurrent downloads | `3` |
 | `download_dir` | Download folder | `./weeb-downloads` |
+| `discord_rpc_enabled` | Discord RPC | `false` |
 | `debug_mode` | Debug logging | `false` |
 
 ---
@@ -133,9 +135,10 @@ Config location: `~/.weeb-cli/weeb.db` (SQLite)
 - [x] SQLite database
 - [x] Notification system
 - [x] Debug mode
+- [x] MAL/AniList integration
+
 
 ### Planned
-- [ ] MAL/AniList integration
 - [ ] Anime recommendations
 - [ ] Batch operations
 - [ ] Watch statistics (graphs)

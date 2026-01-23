@@ -52,6 +52,7 @@
 ### Ek Özellikler
 - SQLite veritabanı (hızlı ve güvenilir)
 - İndirme tamamlandığında sistem bildirimi
+- Discord RPC entegrasyonu (izlediğiniz anime Discord'da görünsün)
 - Arama geçmişi
 - Debug modu ve loglama
 - Otomatik güncelleme kontrolü
@@ -118,6 +119,7 @@ Yapılandırma: `~/.weeb-cli/weeb.db` (SQLite)
 | `aria2_enabled` | Aria2 kullanımı | `true` |
 | `max_concurrent_downloads` | Eşzamanlı indirme | `3` |
 | `download_dir` | İndirme klasörü | `./weeb-downloads` |
+| `discord_rpc_enabled` | Discord RPC | `false` |
 | `debug_mode` | Debug loglama | `false` |
 
 ---
@@ -133,9 +135,9 @@ Yapılandırma: `~/.weeb-cli/weeb.db` (SQLite)
 - [x] SQLite veritabanı
 - [x] Bildirim sistemi
 - [x] Debug modu
+- [x] MAL/AniList entegrasyonu
 
 ### Planlanan
-- [ ] MAL/AniList entegrasyonu
 - [ ] Anime önerileri
 - [ ] Toplu işlemler
 - [ ] İzleme istatistikleri (grafik)

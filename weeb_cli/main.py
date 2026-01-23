@@ -56,7 +56,11 @@ def start():
     check_ffmpeg_silent()
     sync_anilist_pending()
 
-    show_main_menu()
+    try:
+        show_main_menu()
+    finally:
+        from weeb_cli.services.discord_rpc import discord_rpc
+        discord_rpc.disconnect()
 
 def check_incomplete_downloads():
     from weeb_cli.services.downloader import queue_manager

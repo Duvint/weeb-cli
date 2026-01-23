@@ -13,3 +13,4 @@ pyfiglet
 setuptools
 wheel
 py7zr
+pypresence

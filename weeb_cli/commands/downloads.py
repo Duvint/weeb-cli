@@ -337,7 +337,17 @@ def play_local_episode(anime, episode):
     console.print(f"[green]{i18n.get('details.player_starting')}[/green]")
     
     title = f"{anime['title']} - {i18n.get('details.episode')} {episode['number']}"
-    success = player.play(episode["path"], title=title)
+    anime_title = anime['title']
+    episode_number = episode['number']
+    total_episodes = anime.get('episode_count')
+    
+    success = player.play(
+        episode["path"], 
+        title=title,
+        anime_title=anime_title,
+        episode_number=episode_number,
+        total_episodes=total_episodes
+    )
     
     if success:
         try:

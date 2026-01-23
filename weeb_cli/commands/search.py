@@ -312,7 +312,18 @@ def handle_watch_flow(slug, details):
             if details.get("source") == "hianime":
                 headers["Referer"] = "https://hianime.to"
             
-            success = player.play(stream_url, title=title, headers=headers)
+            anime_title = details.get('title', 'Anime')
+            episode_number = int(ep_num) if ep_num else None
+            total_episodes = details.get("total_episodes") or len(episodes)
+            
+            success = player.play(
+                stream_url, 
+                title=title, 
+                headers=headers,
+                anime_title=anime_title,
+                episode_number=episode_number,
+                total_episodes=total_episodes
+            )
             
             if success:
                 try:
